@@ -3,8 +3,8 @@ package usecase
 import (
 	"github.com/google/uuid"
 
-	ent "github.com/Nemo08/nctw/entity"
-	int "github.com/Nemo08/nctw/interfaces"
+	ent "github.com/Nemo08/NCTW/entity"
+	repo "github.com/Nemo08/NCTW/infrastructure/repository"
 )
 
 type ContactUsecase interface {

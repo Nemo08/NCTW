@@ -4,12 +4,12 @@ package main
 import (
 	"net/http"
 
-	cfg "github.com/Nemo08/nctw/infrastructure/config"
-	db "github.com/Nemo08/nctw/infrastructure/database"
-	log "github.com/Nemo08/nctw/infrastructure/logger"
-	repo "github.com/Nemo08/nctw/infrastructure/repository"
-	rout "github.com/Nemo08/nctw/infrastructure/router"
-	use "github.com/Nemo08/nctw/usecase"
+	cfg "github.com/Nemo08/NCTW/infrastructure/config"
+	db "github.com/Nemo08/NCTW/infrastructure/database"
+	log "github.com/Nemo08/NCTW/infrastructure/logger"
+	repo "github.com/Nemo08/NCTW/infrastructure/repository"
+	rout "github.com/Nemo08/NCTW/infrastructure/router"
+	use "github.com/Nemo08/NCTW/usecase"
 )
 
 func main() {

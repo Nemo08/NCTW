@@ -3,7 +3,7 @@ package router
 import (
 	"github.com/gorilla/mux"
 
-	use "github.com/Nemo08/nctw/usecase"
+	use "github.com/Nemo08/NCTW/usecase"
 )
 
 type muxHttpRouter struct {

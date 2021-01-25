@@ -8,8 +8,8 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/mattn/go-sqlite3"
 
-	cfg "github.com/Nemo08/nctw/infrastructure/config"
-	use "github.com/Nemo08/nctw/usecase"
+	cfg "github.com/Nemo08/NCTW/infrastructure/config"
+	use "github.com/Nemo08/NCTW/usecase"
 )
 
 type sqliteRepository struct {

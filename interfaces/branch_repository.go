@@ -3,7 +3,7 @@ package interfaces
 import (
 	"github.com/google/uuid"
 
-	ent "github.com/Nemo08/nctw/entity"
+	ent "github.com/Nemo08/NCTW/entity"
 )
 
 type BranchRepository interface {

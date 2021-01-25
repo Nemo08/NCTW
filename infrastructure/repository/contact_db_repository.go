@@ -7,9 +7,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 
-	ent "github.com/Nemo08/nctw/entity"
-	ifr "github.com/Nemo08/nctw/infrastructure"
-	use "github.com/Nemo08/nctw/usecase"
+	ent "github.com/Nemo08/NCTW/entity"
+	ifr "github.com/Nemo08/NCTW/infrastructure"
+	use "github.com/Nemo08/NCTW/usecase"
 )
 
 type DbContact struct {

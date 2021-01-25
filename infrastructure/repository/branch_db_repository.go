@@ -7,9 +7,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 
-	ent "github.com/Nemo08/nctw/entity"
-	cfg "github.com/Nemo08/nctw/infrastructure/config"
-	use "github.com/Nemo08/nctw/usecase"
+	ent "github.com/Nemo08/NCTW/entity"
+	cfg "github.com/Nemo08/NCTW/infrastructure/config"
+	use "github.com/Nemo08/NCTW/usecase"
 )
 
 type DbBranch struct {

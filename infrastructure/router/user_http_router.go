@@ -7,8 +7,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 
-	ent "github.com/Nemo08/nctw/entity"
-	use "github.com/Nemo08/nctw/usecase"
+	ent "github.com/Nemo08/NCTW/entity"
+	use "github.com/Nemo08/NCTW/usecase"
 )
 
 type userHttpRouter struct {
