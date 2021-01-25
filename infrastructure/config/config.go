@@ -4,9 +4,14 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
-
-	use "github.com/Nemo08/NCTW/usecase"
 )
+
+type LogInterface interface {
+	LogMessage(v ...interface{})
+	LogError(v ...interface{})
+	Print(v ...interface{})
+	Write([]byte) (int, error)
+}
 
 type ConfigInterface interface {
 	Get(param string) string
@@ -17,7 +22,7 @@ type appConfig struct {
 	log use.LogInterface
 }
 
-func NewAppConfigLoader(l use.LogInterface) appConfig {
+func NewAppConfigLoader(l LogInterface) appConfig {
 	err := godotenv.Load()
 	if err != nil {
 		l.LogError("Error loading .env file")
