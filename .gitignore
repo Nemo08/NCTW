@@ -1,0 +1,7 @@
+
+*.db
+*.exe
+/app/dbtest
+app/nctw/cover.out
+static/*
+.vscode/launch.json
