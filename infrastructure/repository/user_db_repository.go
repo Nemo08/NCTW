@@ -8,7 +8,7 @@ import (
 	"github.com/jinzhu/gorm"
 
 	ent "github.com/Nemo08/NCTW/entity"
-	ifr "github.com/Nemo08/NCTW/infrastructure"
+	cfg "github.com/Nemo08/NCTW/infrastructure/config"
 	use "github.com/Nemo08/NCTW/usecase"
 )
 
