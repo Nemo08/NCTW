@@ -4,7 +4,8 @@ import (
 	"github.com/google/uuid"
 
 	ent "github.com/Nemo08/NCTW/entity"
-	repo "github.com/Nemo08/NCTW/infrastructure/repository"
+	log "github.com/Nemo08/NCTW/infrastructure/logger"
+	int "github.com/Nemo08/NCTW/interfaces"
 )
 
 type ContactUsecase interface {
@@ -18,10 +19,10 @@ type ContactUsecase interface {
 
 type contactUsecase struct {
 	repo int.ContactRepository
-	log  LogInterface
+	log  log.LogInterface
 }
 
-func NewContactUsecase(l LogInterface, r int.ContactRepository) *contactUsecase {
+func NewContactUsecase(l log.LogInterface, r int.ContactRepository) *contactUsecase {
 	return &contactUsecase{
 		repo: r,
 		log:  l,

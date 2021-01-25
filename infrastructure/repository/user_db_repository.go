@@ -9,7 +9,7 @@ import (
 
 	ent "github.com/Nemo08/NCTW/entity"
 	cfg "github.com/Nemo08/NCTW/infrastructure/config"
-	use "github.com/Nemo08/NCTW/usecase"
+	log "github.com/Nemo08/NCTW/infrastructure/logger"
 )
 
 type DbUser struct {
@@ -18,10 +18,10 @@ type DbUser struct {
 
 type userRepositorySqlite struct {
 	db  *gorm.DB
-	log use.LogInterface
+	log log.LogInterface
 }
 
-func NewUserRepositorySqlite(l use.LogInterface, c ifr.ConfigInterface, db *gorm.DB) *userRepositorySqlite {
+func NewUserRepositorySqlite(l log.LogInterface, c cfg.ConfigInterface, db *gorm.DB) *userRepositorySqlite {
 	return &userRepositorySqlite{
 		db:  db,
 		log: l,

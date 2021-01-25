@@ -8,15 +8,16 @@ import (
 	"github.com/gorilla/mux"
 
 	ent "github.com/Nemo08/NCTW/entity"
+	log "github.com/Nemo08/NCTW/infrastructure/logger"
 	use "github.com/Nemo08/NCTW/usecase"
 )
 
 type contactHttpRouter struct {
 	uc  use.ContactUsecase
-	log use.LogInterface
+	log log.LogInterface
 }
 
-func NewContactHttpRouter(l use.LogInterface, u use.ContactUsecase, r *mux.Router) {
+func NewContactHttpRouter(l log.LogInterface, u use.ContactUsecase, r *mux.Router) {
 	l.LogMessage("Set up contact router")
 
 	var us contactHttpRouter

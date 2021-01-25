@@ -1,4 +1,4 @@
-package usecase
+package logger
 
 type LogInterface interface {
 	LogMessage(v ...interface{})

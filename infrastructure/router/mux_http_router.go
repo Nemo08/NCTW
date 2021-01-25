@@ -3,14 +3,14 @@ package router
 import (
 	"github.com/gorilla/mux"
 
-	use "github.com/Nemo08/NCTW/usecase"
+	log "github.com/Nemo08/NCTW/infrastructure/logger"
 )
 
 type muxHttpRouter struct {
 	router *mux.Router
 }
 
-func NewMuxHttpRouter(l use.LogInterface) *muxHttpRouter {
+func NewMuxHttpRouter(l log.LogInterface) *muxHttpRouter {
 	l.LogMessage("Set up main router")
 
 	var us muxHttpRouter

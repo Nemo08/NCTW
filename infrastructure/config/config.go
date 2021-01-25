@@ -3,15 +3,9 @@ package config
 import (
 	"os"
 
+	log "github.com/Nemo08/NCTW/infrastructure/logger"
 	"github.com/joho/godotenv"
 )
-
-type LogInterface interface {
-	LogMessage(v ...interface{})
-	LogError(v ...interface{})
-	Print(v ...interface{})
-	Write([]byte) (int, error)
-}
 
 type ConfigInterface interface {
 	Get(param string) string
@@ -19,10 +13,10 @@ type ConfigInterface interface {
 }
 
 type appConfig struct {
-	log use.LogInterface
+	log log.LogInterface
 }
 
-func NewAppConfigLoader(l LogInterface) appConfig {
+func NewAppConfigLoader(l log.LogInterface) appConfig {
 	err := godotenv.Load()
 	if err != nil {
 		l.LogError("Error loading .env file")

@@ -9,7 +9,7 @@ import (
 
 	ent "github.com/Nemo08/NCTW/entity"
 	cfg "github.com/Nemo08/NCTW/infrastructure/config"
-	use "github.com/Nemo08/NCTW/usecase"
+	log "github.com/Nemo08/NCTW/infrastructure/logger"
 )
 
 type DbContact struct {
@@ -18,10 +18,10 @@ type DbContact struct {
 
 type contactRepositorySqlite struct {
 	db  *gorm.DB
-	log use.LogInterface
+	log log.LogInterface
 }
 
-func NewContactRepositorySqlite(l use.LogInterface, c ifr.ConfigInterface, db *gorm.DB) *contactRepositorySqlite {
+func NewContactRepositorySqlite(l log.LogInterface, c cfg.ConfigInterface, db *gorm.DB) *contactRepositorySqlite {
 	return &contactRepositorySqlite{
 		db:  db,
 		log: l,

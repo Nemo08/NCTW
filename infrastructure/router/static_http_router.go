@@ -7,11 +7,11 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 
-	use "github.com/Nemo08/NCTW/usecase"
+	log "github.com/Nemo08/NCTW/infrastructure/logger"
 )
 
 //NewStaticHttpRouter
-func NewStaticHttpRouter(l use.LogInterface, r *mux.Router) {
+func NewStaticHttpRouter(l log.LogInterface, r *mux.Router) {
 	l.LogMessage("Set up static router")
 
 	s := http.StripPrefix("/", noFoldersContent(http.FileServer(http.Dir("../../static"))))

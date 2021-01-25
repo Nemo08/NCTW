@@ -9,7 +9,7 @@ import (
 
 	ent "github.com/Nemo08/NCTW/entity"
 	cfg "github.com/Nemo08/NCTW/infrastructure/config"
-	use "github.com/Nemo08/NCTW/usecase"
+	log "github.com/Nemo08/NCTW/infrastructure/logger"
 )
 
 type DbBranch struct {
@@ -18,10 +18,10 @@ type DbBranch struct {
 
 type BranchRepositorySqlite struct {
 	db  *gorm.DB
-	log use.LogInterface
+	log log.LogInterface
 }
 
-func NewBranchRepositorySqlite(l use.LogInterface, c cfg.ConfigInterface, db *gorm.DB) *BranchRepositorySqlite {
+func NewBranchRepositorySqlite(l log.LogInterface, c cfg.ConfigInterface, db *gorm.DB) *BranchRepositorySqlite {
 	return &BranchRepositorySqlite{
 		db:  db,
 		log: l,

@@ -4,7 +4,8 @@ import (
 	"github.com/google/uuid"
 
 	ent "github.com/Nemo08/NCTW/entity"
-	repo "github.com/Nemo08/NCTW/infrastructure/repository"
+	log "github.com/Nemo08/NCTW/infrastructure/logger"
+	int "github.com/Nemo08/NCTW/interfaces"
 )
 
 type UserUsecase interface {
@@ -19,10 +20,10 @@ type UserUsecase interface {
 
 type userUsecase struct {
 	repo int.UserRepository
-	log  LogInterface
+	log  log.LogInterface
 }
 
-func NewUserUsecase(l LogInterface, r int.UserRepository) *userUsecase {
+func NewUserUsecase(l log.LogInterface, r int.UserRepository) *userUsecase {
 	return &userUsecase{
 		repo: r,
 		log:  l,

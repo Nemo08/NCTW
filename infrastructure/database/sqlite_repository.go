@@ -9,7 +9,7 @@ import (
 	"github.com/mattn/go-sqlite3"
 
 	cfg "github.com/Nemo08/NCTW/infrastructure/config"
-	use "github.com/Nemo08/NCTW/usecase"
+	log "github.com/Nemo08/NCTW/infrastructure/logger"
 )
 
 type sqliteRepository struct {
@@ -20,7 +20,7 @@ func utflower(s string) string {
 	return strings.ToLower(s)
 }
 
-func NewSqliteRepository(l use.LogInterface, c ifr.ConfigInterface) *sqliteRepository {
+func NewSqliteRepository(l log.LogInterface, c cfg.ConfigInterface) *sqliteRepository {
 	if !c.IsSet("DBTYPE") || !c.IsSet("DBCONNECTIONSTRING") {
 		l.LogError("Unable to get config: DBTYPE or DBCONNECTIONSTRING")
 		os.Exit(1)
