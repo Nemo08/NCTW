@@ -5,7 +5,7 @@ import (
 
 	"github.com/joho/godotenv"
 
-	use "github.com/Nemo08/nctw/usecase"
+	use "github.com/Nemo08/NCTW/usecase"
 )
 
 type ConfigInterface interface {
