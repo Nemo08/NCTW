@@ -10,10 +10,10 @@ import (
 
 type BranchUsecase interface {
 	GetAllBranchs() ([]*ent.Branch, error)
-	AddBranch(Branch ent.Branch) (ent.Branch, error)
+	AddBranch(Branch ent.Branch) (*ent.Branch, error)
 	FindByID(id uuid.UUID) (*ent.Branch, error)
 	Find(q string) ([]*ent.Branch, error)
-	UpdateBranch(Branch ent.Branch) (ent.Branch, error)
+	UpdateBranch(Branch ent.Branch) (*ent.Branch, error)
 	DeleteBranchById(id uuid.UUID) error
 }
 
@@ -39,7 +39,7 @@ func (uc *branchUsecase) GetAllBranchs() ([]*ent.Branch, error) {
 	return branchs, nil
 }
 
-func (uc *branchUsecase) AddBranch(u ent.Branch) (ent.Branch, error) {
+func (uc *branchUsecase) AddBranch(u ent.Branch) (*ent.Branch, error) {
 	uc.log.LogMessage("Add branch", u)
 	return uc.repo.Store(u)
 }
@@ -53,7 +53,7 @@ func (uc *branchUsecase) FindByID(id uuid.UUID) (*ent.Branch, error) {
 	return Branch, nil
 }
 
-func (uc *branchUsecase) UpdateBranch(u ent.Branch) (ent.Branch, error) {
+func (uc *branchUsecase) UpdateBranch(u ent.Branch) (*ent.Branch, error) {
 	uc.log.LogMessage("Update branch", u)
 	return uc.repo.UpdateBranch(u)
 }

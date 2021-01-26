@@ -22,10 +22,14 @@ func main() {
 
 	//база
 	sqliterepo := db.NewSqliteRepository(logger, conf)
+	defer sqliterepo.Close()
+
+	//создаем репозитории объектов
 	userrepo := repo.NewUserRepositorySqlite(logger, conf, sqliterepo.GetDB())
 	contrepo := repo.NewContactRepositorySqlite(logger, conf, sqliterepo.GetDB())
+
+	//Автомиграция таблиц
 	sqliterepo.Migrate(&repo.DbUser{}, &repo.DbContact{}, &repo.DbBranch{})
-	defer sqliterepo.Close()
 
 	//бизнес-логика
 	ucase := use.NewUserUsecase(logger, userrepo)

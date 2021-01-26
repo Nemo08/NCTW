@@ -23,7 +23,7 @@ type DbUser struct {
 	Password  string
 }
 
-func db2entity(i DbUser) ent.User {
+func db2user(i DbUser) ent.User {
 	return ent.User{
 		ID:       i.ID,
 		Login:    i.Login,
@@ -31,7 +31,7 @@ func db2entity(i DbUser) ent.User {
 	}
 }
 
-func entity2db(i ent.User) DbUser {
+func user2db(i ent.User) DbUser {
 	return DbUser{
 		ID:       i.ID,
 		Login:    i.Login,
@@ -52,19 +52,20 @@ func NewUserRepositorySqlite(l log.LogInterface, c cfg.ConfigInterface, db *gorm
 	}
 }
 
-func (urs *userRepositorySqlite) Store(user ent.User) (ent.User, error) {
-	var u DbUser
-	u = entity2db(user)
-	u.ID = uuid.New()
+func (urs *userRepositorySqlite) Store(user ent.User) (*ent.User, error) {
+	var d DbUser
+	d = user2db(user)
+	d.ID = uuid.New()
 
-	errSlice := urs.db.Create(&u).GetErrors()
+	errSlice := urs.db.Create(&d).GetErrors()
 	if len(errSlice) != 0 {
 		for _, err := range errSlice {
 			urs.log.LogError("Error while user create", err)
 		}
-		return db2entity(u), errors.New("Error while user create")
+		return &user, errors.New("Error while user create")
 	}
-	return db2entity(u), nil
+	u := db2user(d)
+	return &u, nil
 }
 
 func (urs *userRepositorySqlite) GetAllUsers() ([]*ent.User, error) {
@@ -72,7 +73,7 @@ func (urs *userRepositorySqlite) GetAllUsers() ([]*ent.User, error) {
 	var DbUsers []*DbUser
 	urs.db.Find(&DbUsers)
 	for _, d := range DbUsers {
-		e := db2entity(*d)
+		e := db2user(*d)
 		users = append(users, &e)
 	}
 
@@ -82,7 +83,7 @@ func (urs *userRepositorySqlite) GetAllUsers() ([]*ent.User, error) {
 func (urs *userRepositorySqlite) FindByID(id uuid.UUID) (*ent.User, error) {
 	var d DbUser
 	urs.db.Where("id = ?", id).First(&d)
-	e := db2entity(d)
+	e := db2user(d)
 	return &e, nil
 }
 
@@ -92,16 +93,17 @@ func (urs *userRepositorySqlite) Find(q string) ([]*ent.User, error) {
 
 	urs.db.Where("search_string LIKE ?", strings.ToLower("%"+q+"%")).Find(&DbUsers)
 	for _, d := range DbUsers {
-		e := db2entity(*d)
+		e := db2user(*d)
 		users = append(users, &e)
 	}
 	return users, nil
 }
 
-func (urs *userRepositorySqlite) UpdateUser(u ent.User) (ent.User, error) {
-	d := entity2db(u)
+func (urs *userRepositorySqlite) UpdateUser(u ent.User) (*ent.User, error) {
+	d := user2db(u)
 	urs.db.Where("id = ?", d.ID).Save(&d)
-	return db2entity(d), nil
+	r := db2user(d)
+	return &r, nil
 }
 
 func (urs *userRepositorySqlite) DeleteUserByID(id uuid.UUID) error {
@@ -109,9 +111,10 @@ func (urs *userRepositorySqlite) DeleteUserByID(id uuid.UUID) error {
 	return nil
 }
 
-func (urs *userRepositorySqlite) CheckPassword(login string, password string) (ent.User, error) {
+func (urs *userRepositorySqlite) CheckPassword(login string, password string) (*ent.User, error) {
 	var d DbUser
 
 	urs.db.Where("login = ? AND password = ?", login, password).Take(&d)
-	return db2entity(d), nil
+	u := db2user(d)
+	return &u, nil
 }

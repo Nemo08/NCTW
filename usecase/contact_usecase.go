@@ -11,10 +11,10 @@ import (
 //ContactUsecase основная структура usecase
 type ContactUsecase interface {
 	GetAllContacts() ([]*ent.Contact, error)
-	AddContact(Contact ent.Contact) (ent.Contact, error)
+	AddContact(Contact ent.Contact) (*ent.Contact, error)
 	FindByID(id uuid.UUID) (*ent.Contact, error)
 	Find(q string) ([]*ent.Contact, error)
-	UpdateContact(Contact ent.Contact) (ent.Contact, error)
+	UpdateContact(Contact ent.Contact) (*ent.Contact, error)
 	DeleteContactByID(id uuid.UUID) error
 }
 
@@ -41,7 +41,7 @@ func (uc *contactUsecase) GetAllContacts() ([]*ent.Contact, error) {
 	return contacts, nil
 }
 
-func (uc *contactUsecase) AddContact(u ent.Contact) (ent.Contact, error) {
+func (uc *contactUsecase) AddContact(u ent.Contact) (*ent.Contact, error) {
 	uc.log.LogMessage("Add contact", u)
 	return uc.repo.Store(u)
 }
@@ -65,7 +65,7 @@ func (uc *contactUsecase) Find(q string) ([]*ent.Contact, error) {
 	return contacts, nil
 }
 
-func (uc *contactUsecase) UpdateContact(u ent.Contact) (ent.Contact, error) {
+func (uc *contactUsecase) UpdateContact(u ent.Contact) (*ent.Contact, error) {
 	uc.log.LogMessage("Update contact", u)
 	return uc.repo.UpdateContact(u)
 }

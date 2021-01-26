@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-//Contact main model
+//Contact основная модель
 type Contact struct {
 	ID        uuid.UUID  `gorm:"type:uuid;primary_key;"`
 	CreatedAt time.Time  `gorm:"default:CURRENT_TIMESTAMP" json:"CreatedAt"`
