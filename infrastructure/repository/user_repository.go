@@ -19,8 +19,8 @@ type DbUser struct {
 	CreatedAt    time.Time  `gorm:"default:CURRENT_TIMESTAMP"`
 	UpdatedAt    time.Time  `gorm:"default:CURRENT_TIMESTAMP"`
 	DeletedAt    *time.Time `sql:"index"`
-	Login        string
-	PasswordHash string
+	Login        string     `gorm:"index;unique;not null"`
+	PasswordHash string     `gorm:"not null"`
 }
 
 func db2user(i DbUser) ent.User {
@@ -58,11 +58,14 @@ func (urs *userRepositorySqlite) Store(user ent.User) (*ent.User, error) {
 	d.ID = uuid.New()
 
 	errSlice := urs.db.Create(&d).GetErrors()
+	var estr string
 	if len(errSlice) != 0 {
+
 		for _, err := range errSlice {
 			urs.log.LogError("Error while user create", err)
+			estr = estr + err.Error()
 		}
-		return &user, errors.New("Error while user create")
+		return &user, errors.New("Error while user create:" + estr)
 	}
 	u := db2user(d)
 	return &u, nil

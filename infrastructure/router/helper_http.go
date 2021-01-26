@@ -12,7 +12,8 @@ func Message(message string) map[string]interface{} {
 
 //Respond формирует ответ HTTP
 func Respond(w http.ResponseWriter, data map[string]interface{}, statusCode int) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.WriteHeader(statusCode)
-	w.Header().Add("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(data)
 }
