@@ -21,13 +21,13 @@ func main() {
 
 	//база
 	sqliterepo := db.NewSqliteRepository(logger, conf)
-	urepo := repo.NewUserRepositorySqlite(logger, conf, sqliterepo.GetDB())
+	userrepo := repo.NewUserRepositorySqlite(logger, conf, sqliterepo.GetDB())
 	contrepo := repo.NewContactRepositorySqlite(logger, conf, sqliterepo.GetDB())
 	sqliterepo.Migrate(&repo.DbUser{}, &repo.DbContact{}, &repo.DbBranch{})
 	defer sqliterepo.Close()
 
 	//бизнес-логика
-	ucase := use.NewUserUsecase(logger, urepo)
+	ucase := use.NewUserUsecase(logger, userrepo)
 	contcase := use.NewContactUsecase(logger, contrepo)
 
 	//роуты и сервер
