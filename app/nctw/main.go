@@ -36,10 +36,10 @@ func main() {
 	contcase := use.NewContactUsecase(logger, contrepo)
 
 	//роуты и сервер
-	muxrouter := rout.NewMuxHttpRouter(logger)
-	rout.NewUserHttpRouter(logger, ucase, muxrouter.GetRouter())
-	rout.NewContactHttpRouter(logger, contcase, muxrouter.GetRouter())
-	rout.NewStaticHttpRouter(logger, muxrouter.GetRouter())
+	muxrouter := rout.NewMuxHTTPRouter(logger)
+	rout.NewUserHTTPRouter(logger, ucase, muxrouter.GetRouter())
+	rout.NewContactHTTPRouter(logger, contcase, muxrouter.GetRouter())
+	rout.NewStaticHTTPRouter(logger, muxrouter.GetRouter())
 
 	if !conf.IsSet("SERVEPORT") {
 		logger.LogError("Переменная окружения SERVEPORT для порта не установлена")

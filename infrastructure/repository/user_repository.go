@@ -15,27 +15,27 @@ import (
 
 //DbUser стуктура для хранения User в базе
 type DbUser struct {
-	ID        uuid.UUID  `gorm:"type:uuid;primary_key;"`
-	CreatedAt time.Time  `gorm:"default:CURRENT_TIMESTAMP"`
-	UpdatedAt time.Time  `gorm:"default:CURRENT_TIMESTAMP"`
-	DeletedAt *time.Time `sql:"index"`
-	Login     string
-	Password  string
+	ID           uuid.UUID  `gorm:"type:uuid;primary_key;"`
+	CreatedAt    time.Time  `gorm:"default:CURRENT_TIMESTAMP"`
+	UpdatedAt    time.Time  `gorm:"default:CURRENT_TIMESTAMP"`
+	DeletedAt    *time.Time `sql:"index"`
+	Login        string
+	PasswordHash string
 }
 
 func db2user(i DbUser) ent.User {
 	return ent.User{
-		ID:       i.ID,
-		Login:    i.Login,
-		Password: i.Password,
+		ID:           i.ID,
+		Login:        i.Login,
+		PasswordHash: i.PasswordHash,
 	}
 }
 
 func user2db(i ent.User) DbUser {
 	return DbUser{
-		ID:       i.ID,
-		Login:    i.Login,
-		Password: i.Password,
+		ID:           i.ID,
+		Login:        i.Login,
+		PasswordHash: i.PasswordHash,
 	}
 }
 

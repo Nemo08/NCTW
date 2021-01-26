@@ -10,8 +10,8 @@ import (
 	log "github.com/Nemo08/NCTW/infrastructure/logger"
 )
 
-//NewStaticHttpRouter
-func NewStaticHttpRouter(l log.LogInterface, r *mux.Router) {
+//NewStaticHTTPRouter роутер статики
+func NewStaticHTTPRouter(l log.LogInterface, r *mux.Router) {
 	l.LogMessage("Создаю роутер статики")
 
 	s := http.StripPrefix("/", noFoldersContent(http.FileServer(http.Dir("../../static"))))

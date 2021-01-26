@@ -14,12 +14,8 @@ import (
 )
 
 func TestNewSqliteRepository(t *testing.T) {
-	//логгер
 	logger := log.NewStdLogger()
-
-	//конфигуратор
 	conf := cfg.NewCustomAppConfigLoader(logger)
-	//база
 	sqliterepo := NewSqliteRepository(logger, conf)
 	defer sqliterepo.Close()
 
@@ -27,9 +23,9 @@ func TestNewSqliteRepository(t *testing.T) {
 	userrepo := repo.NewUserRepositorySqlite(logger, conf, sqliterepo.GetDB())
 	ucase := use.NewUserUsecase(logger, userrepo)
 	a := ent.User{
-		ID:       uuid.New(),
-		Login:    "ЛОГин",
-		Password: "",
+		ID:           uuid.New(),
+		Login:        "ЛОГин",
+		PasswordHash: "",
 	}
 	d, err := ucase.AddUser(a)
 	u, err := ucase.Find("логин")

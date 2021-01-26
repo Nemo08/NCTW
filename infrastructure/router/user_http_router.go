@@ -12,39 +12,40 @@ import (
 	use "github.com/Nemo08/NCTW/usecase"
 )
 
-type JsonUser struct {
-	ID       uuid.UUID
-	Login    string
-	Password string
+type jsonUser struct {
+	ID           uuid.UUID
+	Login        string
+	Password     string
+	PasswordHash string `json:"-"`
 }
 
 //json2entity Json объект копируем в Entity
-func json2entity(i JsonUser) ent.User {
+func json2entity(i jsonUser) ent.User {
 	return ent.User{
-		ID:       i.ID,
-		Login:    i.Login,
-		Password: i.Password,
+		ID:           i.ID,
+		Login:        i.Login,
+		PasswordHash: i.PasswordHash,
 	}
 }
 
 //entity2json Entity объект копируем в Json
-func entity2json(i ent.User) JsonUser {
-	return JsonUser{
-		ID:       i.ID,
-		Login:    i.Login,
-		Password: i.Password,
+func entity2json(i ent.User) jsonUser {
+	return jsonUser{
+		ID:    i.ID,
+		Login: i.Login,
 	}
 }
 
-type userHttpRouter struct {
+type userHTTPRouter struct {
 	uc  use.UserUsecase
 	log log.LogInterface
 }
 
-func NewUserHttpRouter(l log.LogInterface, u use.UserUsecase, r *mux.Router) {
+//NewUserHTTPRouter роутер пользователей
+func NewUserHTTPRouter(l log.LogInterface, u use.UserUsecase, r *mux.Router) {
 	l.LogMessage("Создаю роутер для user")
 
-	var us userHttpRouter
+	var us userHTTPRouter
 	us.uc = u
 	us.log = l
 
@@ -57,15 +58,15 @@ func NewUserHttpRouter(l log.LogInterface, u use.UserUsecase, r *mux.Router) {
 	subr.HandleFunc("/{id:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}}", us.Delete).Methods("DELETE")
 }
 
-func (ush *userHttpRouter) GetAllUsers(w http.ResponseWriter, r *http.Request) {
+func (ush *userHTTPRouter) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	ush.log.LogMessage("Http request to get all users")
 
 	var u []*ent.User
-	var jsusers []*JsonUser
+	var jsusers []*jsonUser
 	u, err := ush.uc.GetAllUsers()
 	if err != nil {
-		resp := Message(true, "error")
-		Respond(w, resp)
+		resp := Message("error:" + err.Error())
+		Respond(w, resp, http.StatusInternalServerError)
 		return
 	}
 
@@ -74,125 +75,133 @@ func (ush *userHttpRouter) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 		jsusers = append(jsusers, &j)
 	}
 
-	resp := Message(true, "success")
+	resp := Message("success")
 	resp["data"] = jsusers
-	Respond(w, resp)
+	Respond(w, resp, http.StatusOK)
 }
 
-func (ush *userHttpRouter) GetUser(w http.ResponseWriter, r *http.Request) {
+func (ush *userHTTPRouter) GetUser(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	id, err := uuid.Parse(params["id"])
 
 	ush.log.LogMessage("Http request to get one user with id ", id)
 
 	if err != nil {
-		Respond(w, Message(false, "Error while decoding request body"))
+		Respond(w, Message("Error while decoding request body:"+err.Error()), http.StatusBadRequest)
 		return
 	}
 
 	var u *ent.User
 	u, err = ush.uc.FindByID(id)
 	if err != nil {
-		resp := Message(true, "error")
-		Respond(w, resp)
+		resp := Message("error:" + err.Error())
+		Respond(w, resp, http.StatusInternalServerError)
 		return
 	}
-	resp := Message(true, "success")
+	resp := Message("success")
 	j := entity2json(*u)
 	resp["data"] = &j
-	Respond(w, resp)
+	Respond(w, resp, http.StatusOK)
 }
 
-func (ush *userHttpRouter) Find(w http.ResponseWriter, r *http.Request) {
+func (ush *userHTTPRouter) Find(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	q := params["query"]
 
 	ush.log.LogMessage("Http request to find users with query ", q)
 
 	if len(q) < 3 {
-		resp := Message(true, "Too short query string")
-		Respond(w, resp)
+		resp := Message("Too short query string")
+		Respond(w, resp, http.StatusBadRequest)
 		return
 	}
 
 	var u []*ent.User
 	u, err := ush.uc.Find(q)
 	if err != nil {
-		resp := Message(true, "error")
-		Respond(w, resp)
+		resp := Message("error:" + err.Error())
+		Respond(w, resp, http.StatusInternalServerError)
 		return
 	}
 
-	var jsusers []*JsonUser
+	var jsusers []*jsonUser
 	for _, d := range u {
 		j := entity2json(*d)
 		jsusers = append(jsusers, &j)
 	}
 
-	resp := Message(true, "success")
+	resp := Message("success")
 	resp["data"] = jsusers
-	Respond(w, resp)
+	Respond(w, resp, http.StatusOK)
 }
 
-func (ush *userHttpRouter) Store(w http.ResponseWriter, r *http.Request) {
+func (ush *userHTTPRouter) Store(w http.ResponseWriter, r *http.Request) {
 	ush.log.LogMessage("Http request to make one user")
 
-	j := &JsonUser{}
+	j := &jsonUser{}
 	err := json.NewDecoder(r.Body).Decode(j)
 	if err != nil {
-		Respond(w, Message(false, "Error while decoding request body: "+err.Error()))
+		Respond(w, Message("Error while decoding request body: "+err.Error()), http.StatusBadRequest)
 		return
 	}
-	resp := Message(true, "success")
 
-	u := json2entity(*j)
-	resp["data"], err = ush.uc.AddUser(u)
+	u, err := ent.NewUser(j.Login, j.Password)
 	if err != nil {
-		Respond(w, Message(false, "Error while user store: "+err.Error()))
+		Respond(w, Message("Error while user store: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
 
-	Respond(w, resp)
+	u2, err := ush.uc.AddUser(u)
+	if err != nil {
+		Respond(w, Message("Error while user store: "+err.Error()), http.StatusInternalServerError)
+		return
+	}
+
+	*j = entity2json(*u2)
+	resp := Message("success")
+	resp["data"] = j
+	Respond(w, resp, http.StatusOK)
 }
 
-func (ush *userHttpRouter) Update(w http.ResponseWriter, r *http.Request) {
+func (ush *userHTTPRouter) Update(w http.ResponseWriter, r *http.Request) {
 	ush.log.LogMessage("Http request to update one user")
 
-	j := &JsonUser{}
+	j := &jsonUser{}
 	err := json.NewDecoder(r.Body).Decode(j)
 	if err != nil {
-		Respond(w, Message(false, "Error while decoding request body: "+err.Error()))
+		Respond(w, Message("Error while decoding request body: "+err.Error()), http.StatusBadRequest)
 		return
 	}
-	resp := Message(true, "success")
 
-	u := json2entity(*j)
-	resp["data"], err = ush.uc.UpdateUser(u)
+	u, err := ush.uc.UpdateUser(json2entity(*j))
 	if err != nil {
-		Respond(w, Message(false, "Error while user store: "+err.Error()))
+		Respond(w, Message("Error while user store: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
 
-	Respond(w, resp)
+	*j = entity2json(*u)
+	resp := Message("success")
+	resp["data"] = j
+	Respond(w, resp, http.StatusOK)
 }
 
-func (ush *userHttpRouter) Delete(w http.ResponseWriter, r *http.Request) {
+func (ush *userHTTPRouter) Delete(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	id, err := uuid.Parse(params["id"])
 
 	ush.log.LogMessage("Http request to delete one user with id ", id)
 
 	if err != nil {
-		Respond(w, Message(false, "Error while decoding request body"))
+		Respond(w, Message("Error while decoding request body:"+err.Error()), http.StatusBadRequest)
 		return
 	}
 
 	err = ush.uc.DeleteUserByID(id)
 	if err != nil {
-		resp := Message(true, "Error while delete user")
-		Respond(w, resp)
+		resp := Message("Error while delete user:" + err.Error())
+		Respond(w, resp, http.StatusInternalServerError)
 		return
 	}
-	resp := Message(true, "success")
-	Respond(w, resp)
+
+	Respond(w, Message("success"), http.StatusOK)
 }

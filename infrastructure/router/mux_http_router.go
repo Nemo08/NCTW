@@ -6,19 +6,22 @@ import (
 	log "github.com/Nemo08/NCTW/infrastructure/logger"
 )
 
-type muxHttpRouter struct {
+//MuxHTTPRouter структура базового роутера
+type MuxHTTPRouter struct {
 	router *mux.Router
 }
 
-func NewMuxHttpRouter(l log.LogInterface) *muxHttpRouter {
+//NewMuxHTTPRouter новый базовый роутер
+func NewMuxHTTPRouter(l log.LogInterface) *MuxHTTPRouter {
 	l.LogMessage("Создаю основной роутер")
 
-	var us muxHttpRouter
+	var us MuxHTTPRouter
 	us.router = mux.NewRouter()
 	us.router.StrictSlash(true)
 	return &us
 }
 
-func (mr *muxHttpRouter) GetRouter() *mux.Router {
+//GetRouter передает роутер
+func (mr *MuxHTTPRouter) GetRouter() *mux.Router {
 	return mr.router
 }
