@@ -3,6 +3,7 @@ package main
 
 import (
 	"net/http"
+	"os"
 
 	cfg "github.com/Nemo08/NCTW/infrastructure/config"
 	db "github.com/Nemo08/NCTW/infrastructure/database"
@@ -36,8 +37,12 @@ func main() {
 	rout.NewContactHttpRouter(logger, contcase, muxrouter.GetRouter())
 	rout.NewStaticHttpRouter(logger, muxrouter.GetRouter())
 
-	logger.LogMessage("Сервер запущен на порту 8222")
-	err := http.ListenAndServe(":8222", muxrouter.GetRouter())
+	if !conf.IsSet("SERVEPORT") {
+		logger.LogError("Переменная окружения SERVEPORT для порта не установлена")
+		os.Exit(1)
+	}
+	err := http.ListenAndServe(":"+conf.Get("SERVEPORT"), muxrouter.GetRouter())
+	logger.LogMessage("Сервер запущен на порту " + conf.Get("SERVEPORT"))
 	if err != nil {
 		logger.LogError(err)
 	}

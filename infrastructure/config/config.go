@@ -26,12 +26,12 @@ func NewAppConfigLoader(l log.LogInterface) appConfig {
 }
 
 func (ac appConfig) Get(param string) string {
-	ac.log.LogMessage("Читаю переменную окружения ", param, " = ", os.Getenv(param))
+	ac.log.LogMessage("Читаю переменную окружения '", param, "' = ", os.Getenv(param))
 	return os.Getenv(param)
 }
 
 func (ac appConfig) IsSet(param string) bool {
 	_, set := os.LookupEnv(param)
-	ac.log.LogMessage("Проверяю переменную окружения ", param, ", она равна установлена")
+	ac.log.LogMessage("Проверяю переменную окружения '", param, "', она установлена")
 	return set
 }
