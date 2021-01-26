@@ -12,7 +12,7 @@ import (
 
 //NewStaticHttpRouter
 func NewStaticHttpRouter(l log.LogInterface, r *mux.Router) {
-	l.LogMessage("Set up static router")
+	l.LogMessage("Создаю роутер статики")
 
 	s := http.StripPrefix("/", noFoldersContent(http.FileServer(http.Dir("../../static"))))
 	loggedRouter := handlers.LoggingHandler(l, s)

@@ -18,7 +18,7 @@ type userHttpRouter struct {
 }
 
 func NewUserHttpRouter(l log.LogInterface, u use.UserUsecase, r *mux.Router) {
-	l.LogMessage("Set up user router")
+	l.LogMessage("Создаю роутер для user")
 
 	var us userHttpRouter
 	us.uc = u

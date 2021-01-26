@@ -18,7 +18,7 @@ type contactHttpRouter struct {
 }
 
 func NewContactHttpRouter(l log.LogInterface, u use.ContactUsecase, r *mux.Router) {
-	l.LogMessage("Set up contact router")
+	l.LogMessage("Создаю роутер для contact")
 
 	var us contactHttpRouter
 	us.uc = u

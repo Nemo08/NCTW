@@ -28,6 +28,6 @@ func (sl stdLog) Print(v ...interface{}) {
 }
 
 func (sl stdLog) Write(b []byte) (int, error) {
-	log.Infoln("[Static server: ", string(b), "]")
+	log.Infoln("[Сервер статики: ", string(b), "]")
 	return len(b), nil
 }

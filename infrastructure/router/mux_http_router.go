@@ -11,7 +11,7 @@ type muxHttpRouter struct {
 }
 
 func NewMuxHttpRouter(l log.LogInterface) *muxHttpRouter {
-	l.LogMessage("Set up main router")
+	l.LogMessage("Создаю основной роутер")
 
 	var us muxHttpRouter
 	us.router = mux.NewRouter()

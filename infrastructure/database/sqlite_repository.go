@@ -22,7 +22,7 @@ func utflower(s string) string {
 
 func NewSqliteRepository(l log.LogInterface, c cfg.ConfigInterface) *sqliteRepository {
 	if !c.IsSet("DBTYPE") || !c.IsSet("DBCONNECTIONSTRING") {
-		l.LogError("Unable to get config: DBTYPE or DBCONNECTIONSTRING")
+		l.LogError("Не установлены переменные окружения: DBTYPE или DBCONNECTIONSTRING")
 		os.Exit(1)
 	}
 
@@ -51,7 +51,6 @@ func NewSqliteRepository(l log.LogInterface, c cfg.ConfigInterface) *sqliteRepos
 	}
 
 	//db.LogMode(true)
-
 	return &sqliteRepository{db: db}
 }
 
