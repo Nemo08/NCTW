@@ -91,7 +91,7 @@ func (urs *userRepositorySqlite) Find(q string) ([]*ent.User, error) {
 	var users []*ent.User
 	var DbUsers []*DbUser
 
-	urs.db.Where("search_string LIKE ?", strings.ToLower("%"+q+"%")).Find(&DbUsers)
+	urs.db.Where("utflower(login) LIKE ?", strings.ToLower("%"+q+"%")).Find(&DbUsers)
 	for _, d := range DbUsers {
 		e := db2user(*d)
 		users = append(users, &e)
