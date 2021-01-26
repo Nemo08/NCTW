@@ -56,7 +56,7 @@ func (cts *BranchRepositorySqlite) GetAllBranchs() ([]*ent.Branch, error) {
 	return Branchs, nil
 }
 
-func (cts *BranchRepositorySqlite) FindById(id uuid.UUID) (*ent.Branch, error) {
+func (cts *BranchRepositorySqlite) FindByID(id uuid.UUID) (*ent.Branch, error) {
 	var c DbBranch
 	cts.db.Set("gorm:auto_preload", true).Where("id = ?", id).First(&c)
 	return &c.Branch, nil

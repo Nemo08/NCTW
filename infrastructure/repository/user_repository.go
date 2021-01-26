@@ -13,16 +13,17 @@ import (
 	log "github.com/Nemo08/NCTW/infrastructure/logger"
 )
 
+//DbUser стуктура для хранения User в базе
 type DbUser struct {
 	ID        uuid.UUID  `gorm:"type:uuid;primary_key;"`
-	CreatedAt time.Time  `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
-	UpdatedAt time.Time  `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
-	DeletedAt *time.Time `sql:"index" json:"-"`
+	CreatedAt time.Time  `gorm:"default:CURRENT_TIMESTAMP"`
+	UpdatedAt time.Time  `gorm:"default:CURRENT_TIMESTAMP"`
+	DeletedAt *time.Time `sql:"index"`
 	Login     string
 	Password  string
 }
 
-func DB2Entity(i DbUser) ent.User {
+func db2entity(i DbUser) ent.User {
 	return ent.User{
 		ID:       i.ID,
 		Login:    i.Login,
@@ -30,7 +31,7 @@ func DB2Entity(i DbUser) ent.User {
 	}
 }
 
-func Entity2DB(i ent.User) DbUser {
+func entity2db(i ent.User) DbUser {
 	return DbUser{
 		ID:       i.ID,
 		Login:    i.Login,
@@ -43,6 +44,7 @@ type userRepositorySqlite struct {
 	log log.LogInterface
 }
 
+//NewUserRepositorySqlite создание объекта репозитория для User
 func NewUserRepositorySqlite(l log.LogInterface, c cfg.ConfigInterface, db *gorm.DB) *userRepositorySqlite {
 	return &userRepositorySqlite{
 		db:  db,
@@ -52,57 +54,57 @@ func NewUserRepositorySqlite(l log.LogInterface, c cfg.ConfigInterface, db *gorm
 
 func (urs *userRepositorySqlite) Store(user ent.User) (ent.User, error) {
 	var u DbUser
-	u = Entity2DB(user)
+	u = entity2db(user)
 	u.ID = uuid.New()
 
-	err_slice := urs.db.Create(&u).GetErrors()
-	if len(err_slice) != 0 {
-		for _, err := range err_slice {
+	errSlice := urs.db.Create(&u).GetErrors()
+	if len(errSlice) != 0 {
+		for _, err := range errSlice {
 			urs.log.LogError("Error while user create", err)
 		}
-		return DB2Entity(u), errors.New("Error while user create")
+		return db2entity(u), errors.New("Error while user create")
 	}
-	return DB2Entity(u), nil
+	return db2entity(u), nil
 }
 
 func (urs *userRepositorySqlite) GetAllUsers() ([]*ent.User, error) {
 	var users []*ent.User
-	var dbusers []*DbUser
-	urs.db.Find(&dbusers)
-	for _, d := range dbusers {
-		e := DB2Entity(*d)
+	var DbUsers []*DbUser
+	urs.db.Find(&DbUsers)
+	for _, d := range DbUsers {
+		e := db2entity(*d)
 		users = append(users, &e)
 	}
 
 	return users, nil
 }
 
-func (urs *userRepositorySqlite) FindById(id uuid.UUID) (*ent.User, error) {
+func (urs *userRepositorySqlite) FindByID(id uuid.UUID) (*ent.User, error) {
 	var d DbUser
 	urs.db.Where("id = ?", id).First(&d)
-	e := DB2Entity(d)
+	e := db2entity(d)
 	return &e, nil
 }
 
 func (urs *userRepositorySqlite) Find(q string) ([]*ent.User, error) {
 	var users []*ent.User
-	var dbusers []*DbUser
-	urs.db.Where("search_string LIKE ?", strings.ToLower("%"+q+"%")).Find(&dbusers)
-	for _, d := range dbusers {
-		e := DB2Entity(*d)
+	var DbUsers []*DbUser
+
+	urs.db.Where("search_string LIKE ?", strings.ToLower("%"+q+"%")).Find(&DbUsers)
+	for _, d := range DbUsers {
+		e := db2entity(*d)
 		users = append(users, &e)
 	}
-
 	return users, nil
 }
 
 func (urs *userRepositorySqlite) UpdateUser(u ent.User) (ent.User, error) {
-	d := Entity2DB(u)
+	d := entity2db(u)
 	urs.db.Where("id = ?", d.ID).Save(&d)
-	return DB2Entity(d), nil
+	return db2entity(d), nil
 }
 
-func (urs *userRepositorySqlite) DeleteUserById(id uuid.UUID) error {
+func (urs *userRepositorySqlite) DeleteUserByID(id uuid.UUID) error {
 	urs.db.Where("id = ?", id).Delete(&DbUser{})
 	return nil
 }
@@ -111,5 +113,5 @@ func (urs *userRepositorySqlite) CheckPassword(login string, password string) (e
 	var d DbUser
 
 	urs.db.Where("login = ? AND password = ?", login, password).Take(&d)
-	return DB2Entity(d), nil
+	return db2entity(d), nil
 }

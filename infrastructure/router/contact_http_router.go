@@ -60,7 +60,7 @@ func (ush *contactHttpRouter) GetContact(w http.ResponseWriter, r *http.Request)
 	}
 
 	var Contact *ent.Contact
-	Contact, err = ush.uc.FindById(id)
+	Contact, err = ush.uc.FindByID(id)
 	if err != nil {
 		resp := Message(true, "error")
 		Respond(w, resp)
@@ -144,7 +144,7 @@ func (ush *contactHttpRouter) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = ush.uc.DeleteContactById(id)
+	err = ush.uc.DeleteContactByID(id)
 	if err != nil {
 		resp := Message(true, "Error while delete contact")
 		Respond(w, resp)

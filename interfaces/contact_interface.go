@@ -9,8 +9,8 @@ import (
 type ContactRepository interface {
 	Store(Contact ent.Contact) (ent.Contact, error)
 	GetAllContacts() ([]*ent.Contact, error)
-	FindById(id uuid.UUID) (*ent.Contact, error)
+	FindByID(id uuid.UUID) (*ent.Contact, error)
 	Find(q string) ([]*ent.Contact, error)
 	UpdateContact(Contact ent.Contact) (ent.Contact, error)
-	DeleteContactById(id uuid.UUID) error
+	DeleteContactByID(id uuid.UUID) error
 }

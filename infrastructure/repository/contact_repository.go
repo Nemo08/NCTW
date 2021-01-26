@@ -54,7 +54,7 @@ func (cts *contactRepositorySqlite) GetAllContacts() ([]*ent.Contact, error) {
 	return contacts, nil
 }
 
-func (cts *contactRepositorySqlite) FindById(id uuid.UUID) (*ent.Contact, error) {
+func (cts *contactRepositorySqlite) FindByID(id uuid.UUID) (*ent.Contact, error) {
 	var c DbContact
 	cts.db.Set("gorm:auto_preload", true).Where("id = ?", id).First(&c)
 	return &c.Contact, nil
@@ -78,7 +78,7 @@ func (cts *contactRepositorySqlite) UpdateContact(Contact ent.Contact) (ent.Cont
 	return c.Contact, nil
 }
 
-func (cts *contactRepositorySqlite) DeleteContactById(id uuid.UUID) error {
+func (cts *contactRepositorySqlite) DeleteContactByID(id uuid.UUID) error {
 	cts.db.Where("id = ?", id).Delete(DbContact{})
 	return nil
 }
