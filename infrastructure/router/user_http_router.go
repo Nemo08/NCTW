@@ -54,8 +54,9 @@ func NewUserHTTPRouter(l log.LogInterface, u use.UserUsecase, r *mux.Router) {
 	}
 
 	subr := r.PathPrefix("/user").Subrouter()
+	//subr.Use(suffixMiddleware)
 	subr.HandleFunc("", us.Store).Methods("POST")
-	//subr.HandleFunc("", us.GetAllUsers).Methods("GET")
+	subr.HandleFunc("", us.GetAllUsers).Methods("GET")
 	subr.HandleFunc("/{id:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}}", us.GetUser).Methods("GET")
 	subr.HandleFunc("/search/{query}", us.Find).Methods("GET")
 	subr.HandleFunc("", us.Update).Methods("PUT")

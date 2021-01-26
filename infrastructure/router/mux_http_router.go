@@ -17,7 +17,19 @@ func NewMuxHTTPRouter(l log.LogInterface) *MuxHTTPRouter {
 
 	var us MuxHTTPRouter
 	us.router = mux.NewRouter()
-	us.router.StrictSlash(true)
+	//us.router.Use(suffixMiddleware)
+	/*
+		m := http.NewServeMux()
+
+		m.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
+			fmt.Println(req.URL.Path)
+			if req.URL.Path != "/" {
+				req.URL.Path = strings.TrimSuffix(req.URL.Path, "/")
+			}
+			// do something with req
+			us.router.ServeHTTP(w, req)
+		})
+	*/
 	return &us
 }
 
