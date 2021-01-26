@@ -17,6 +17,7 @@ type jsonUser struct {
 	Login        string
 	Password     string `json:",omitempty"`
 	PasswordHash string `json:"-"`
+	Email        string
 }
 
 //json2entity Json объект копируем в Entity
@@ -25,6 +26,7 @@ func json2entity(i jsonUser) ent.User {
 		ID:           i.ID,
 		Login:        i.Login,
 		PasswordHash: i.PasswordHash,
+		Email:        i.Email,
 	}
 }
 
@@ -33,6 +35,7 @@ func entity2json(i ent.User) jsonUser {
 	return jsonUser{
 		ID:    i.ID,
 		Login: i.Login,
+		Email: i.Email,
 	}
 }
 
@@ -45,13 +48,14 @@ type userHTTPRouter struct {
 func NewUserHTTPRouter(l log.LogInterface, u use.UserUsecase, r *mux.Router) {
 	l.LogMessage("Создаю роутер для user")
 
-	var us userHTTPRouter
-	us.uc = u
-	us.log = l
+	us := userHTTPRouter{
+		uc:  u,
+		log: l,
+	}
 
 	subr := r.PathPrefix("/user").Subrouter()
 	subr.HandleFunc("", us.Store).Methods("POST")
-	subr.HandleFunc("", us.GetAllUsers).Methods("GET")
+	//subr.HandleFunc("", us.GetAllUsers).Methods("GET")
 	subr.HandleFunc("/{id:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}}", us.GetUser).Methods("GET")
 	subr.HandleFunc("/search/{query}", us.Find).Methods("GET")
 	subr.HandleFunc("", us.Update).Methods("PUT")
@@ -139,13 +143,14 @@ func (ush *userHTTPRouter) Store(w http.ResponseWriter, r *http.Request) {
 	ush.log.LogMessage("Http request to make one user")
 
 	j := &jsonUser{}
+
 	err := json.NewDecoder(r.Body).Decode(j)
 	if err != nil {
 		Respond(w, Message("Error while decoding request body: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
-	u, err := ent.NewUser(j.Login, j.Password)
+	u, err := ent.NewUser(j.Login, j.Password, j.Email)
 	if err != nil {
 		Respond(w, Message("Error while user store: "+err.Error()), http.StatusInternalServerError)
 		return

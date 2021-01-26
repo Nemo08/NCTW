@@ -19,23 +19,26 @@ type DbUser struct {
 	CreatedAt    time.Time  `gorm:"default:CURRENT_TIMESTAMP"`
 	UpdatedAt    time.Time  `gorm:"default:CURRENT_TIMESTAMP"`
 	DeletedAt    *time.Time `sql:"index"`
-	Login        string     `gorm:"index;unique;not null"`
-	PasswordHash string     `gorm:"not null"`
+	Login        *string    `gorm:"index;unique;not null"`
+	PasswordHash *string    `gorm:"not null"`
+	Email        *string    `gorm:"not null"`
 }
 
 func db2user(i DbUser) ent.User {
 	return ent.User{
 		ID:           i.ID,
-		Login:        i.Login,
-		PasswordHash: i.PasswordHash,
+		Login:        *i.Login,
+		PasswordHash: *i.PasswordHash,
+		Email:        *i.Email,
 	}
 }
 
 func user2db(i ent.User) DbUser {
 	return DbUser{
 		ID:           i.ID,
-		Login:        i.Login,
-		PasswordHash: i.PasswordHash,
+		Login:        &i.Login,
+		PasswordHash: &i.PasswordHash,
+		Email:        &i.Email,
 	}
 }
 
