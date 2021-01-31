@@ -8,7 +8,10 @@ type stdLog struct {
 }
 
 func NewStdLogger() stdLog {
-	log.SetFormatter(&log.JSONFormatter{})
+	log.SetFormatter(&log.TextFormatter{
+		DisableColors: false,
+		FullTimestamp: true,
+	})
 	return stdLog{}
 }
 
@@ -25,6 +28,6 @@ func (sl stdLog) Print(v ...interface{}) {
 }
 
 func (sl stdLog) Write(b []byte) (int, error) {
-	log.Infoln("[Сервер статики: ", string(b), "]")
+	log.Infoln("[Static server: ", string(b), "]")
 	return len(b), nil
 }
