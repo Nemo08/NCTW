@@ -1,155 +1,178 @@
 package router
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/gorilla/mux"
+	"github.com/labstack/echo/v4"
 
 	ent "github.com/Nemo08/NCTW/entity"
 	log "github.com/Nemo08/NCTW/infrastructure/logger"
 	use "github.com/Nemo08/NCTW/usecase"
 )
 
-type userHttpRouter struct {
+type jsonUser struct {
+	ID           uuid.UUID `json:"id"`
+	Login        string    `json:"login"`
+	Password     string    `json:",omitempty"`
+	PasswordHash string    `json:"-"`
+	Email        string    `json:"email"`
+}
+
+//json2user Json объект копируем в Entity
+func json2user(i jsonUser) ent.User {
+	return ent.User{
+		ID:           i.ID,
+		Login:        i.Login,
+		PasswordHash: i.PasswordHash,
+		Email:        i.Email,
+	}
+}
+
+//user2json Entity объект копируем в Json
+func user2json(i ent.User) jsonUser {
+	return jsonUser{
+		ID:    i.ID,
+		Login: i.Login,
+		Email: i.Email,
+	}
+}
+
+type userHTTPRouter struct {
 	uc  use.UserUsecase
 	log log.LogInterface
 }
 
-func NewUserHttpRouter(l log.LogInterface, u use.UserUsecase, r *mux.Router) {
-	l.LogMessage("Set up user router")
+//NewUserHTTPRouter роутер пользователей
+func NewUserHTTPRouter(l log.LogInterface, u use.UserUsecase, g *echo.Group) {
+	l.LogMessage("Создаю роутер для user")
 
-	var us userHttpRouter
-	us.uc = u
-	us.log = l
-
-	subr := r.PathPrefix("/user").Subrouter()
-	subr.HandleFunc("", us.GetAllUsers).Methods("GET")
-	subr.HandleFunc("", us.Store).Methods("POST")
-	subr.HandleFunc("/{id:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}}", us.GetUser).Methods("GET")
-	subr.HandleFunc("/search/{query}", us.Find).Methods("GET")
-	subr.HandleFunc("", us.Update).Methods("PUT")
-	subr.HandleFunc("/{id:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}}", us.Delete).Methods("DELETE")
-}
-
-func (ush *userHttpRouter) GetAllUsers(w http.ResponseWriter, r *http.Request) {
-	ush.log.LogMessage("Http request to get all users")
-
-	var users []*ent.User
-	users, err := ush.uc.GetAllUsers()
-	if err != nil {
-		resp := Message(true, "error")
-		Respond(w, resp)
-		return
-	}
-	resp := Message(true, "success")
-	resp["data"] = users
-	Respond(w, resp)
-}
-
-func (ush *userHttpRouter) GetUser(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	id, err := uuid.Parse(params["id"])
-
-	ush.log.LogMessage("Http request to get one user with id ", id)
-
-	if err != nil {
-		Respond(w, Message(false, "Error while decoding request body"))
-		return
+	us := userHTTPRouter{
+		uc:  u,
+		log: l,
 	}
 
-	var User *ent.User
-	User, err = ush.uc.FindById(id)
-	if err != nil {
-		resp := Message(true, "error")
-		Respond(w, resp)
-		return
-	}
-	resp := Message(true, "success")
-	resp["data"] = &User
-	Respond(w, resp)
+	subr := g.Group("/user")
+	subr.POST("", us.Store)
+	subr.GET("", us.GetAllUsers)
+	subr.GET("/:id", us.GetUser)
+	subr.GET("/search/:query", us.Find)
+	subr.PUT("", us.Update)
+	subr.DELETE("/:id", us.Delete)
 }
 
-func (ush *userHttpRouter) Find(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	q := params["query"]
+func (ush *userHTTPRouter) GetAllUsers(c echo.Context) (err error) {
+	ush.log.LogMessage("Запрошены все пользователи")
 
-	ush.log.LogMessage("Http request to find users with query ", q)
+	var u []*ent.User
+	var jsusers []*jsonUser
 
+	u, err = ush.uc.GetAllUsers()
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "error:"+err.Error())
+	}
+
+	for _, d := range u {
+		j := user2json(*d)
+		jsusers = append(jsusers, &j)
+	}
+
+	return c.JSON(http.StatusOK, jsusers)
+}
+
+func (ush *userHTTPRouter) GetUser(c echo.Context) (err error) {
+	ush.log.LogMessage("Http request to get one user with id ", c.Param("id"))
+
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Error while decoding request body:"+err.Error())
+	}
+
+	var u *ent.User
+	u, err = ush.uc.FindByID(id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "error:"+err.Error())
+	}
+
+	j := user2json(*u)
+	return c.JSON(http.StatusOK, j)
+}
+
+func (ush *userHTTPRouter) Find(c echo.Context) (err error) {
+	ush.log.LogMessage("Http request to find users with query ", c.Param("query"))
+
+	q := c.Param("query")
 	if len(q) < 3 {
-		resp := Message(true, "Too short query string")
-		Respond(w, resp)
-		return
+		return echo.NewHTTPError(http.StatusBadRequest, "Too short query string")
 	}
 
-	var users []*ent.User
-	users, err := ush.uc.Find(q)
+	var u []*ent.User
+	u, err = ush.uc.Find(q)
 	if err != nil {
-		resp := Message(true, "error")
-		Respond(w, resp)
-		return
+		return echo.NewHTTPError(http.StatusInternalServerError, "error:"+err.Error())
 	}
-	resp := Message(true, "success")
-	resp["data"] = users
-	Respond(w, resp)
+
+	var jsusers []*jsonUser
+	for _, d := range u {
+		j := user2json(*d)
+		jsusers = append(jsusers, &j)
+	}
+
+	return c.JSON(http.StatusOK, jsusers)
 }
 
-func (ush *userHttpRouter) Store(w http.ResponseWriter, r *http.Request) {
+func (ush *userHTTPRouter) Store(c echo.Context) (err error) {
 	ush.log.LogMessage("Http request to make one user")
 
-	User := &ent.User{}
-	err := json.NewDecoder(r.Body).Decode(User)
-	if err != nil {
-		Respond(w, Message(false, "Error while decoding request body: "+err.Error()))
-		return
-	}
-	resp := Message(true, "success")
-	resp["data"], err = ush.uc.AddUser(*User)
-	if err != nil {
-		Respond(w, Message(false, "Error while user store: "+err.Error()))
-		return
+	j := &jsonUser{}
+
+	if err = c.Bind(j); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Error while decoding request body: "+err.Error())
 	}
 
-	Respond(w, resp)
+	u, err := ent.NewUser(j.Login, j.Password, j.Email)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Error while user store: "+err.Error())
+	}
+
+	u2, err := ush.uc.AddUser(u)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Error while user store: "+err.Error())
+	}
+
+	*j = user2json(*u2)
+	return c.JSON(http.StatusOK, j)
 }
 
-func (ush *userHttpRouter) Update(w http.ResponseWriter, r *http.Request) {
+func (ush *userHTTPRouter) Update(c echo.Context) (err error) {
 	ush.log.LogMessage("Http request to update one user")
 
-	User := &ent.User{}
-	err := json.NewDecoder(r.Body).Decode(User)
-	if err != nil {
-		Respond(w, Message(false, "Error while decoding request body: "+err.Error()))
-		return
-	}
-	resp := Message(true, "success")
-	resp["data"], err = ush.uc.UpdateUser(*User)
-	if err != nil {
-		Respond(w, Message(false, "Error while user store: "+err.Error()))
-		return
+	j := &jsonUser{}
+	if err = c.Bind(j); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Error while decoding request body: "+err.Error())
 	}
 
-	Respond(w, resp)
+	u, err := ush.uc.UpdateUser(json2user(*j))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Error while user store: "+err.Error())
+	}
+
+	*j = user2json(*u)
+	return c.JSON(http.StatusOK, j)
 }
 
-func (ush *userHttpRouter) Delete(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	id, err := uuid.Parse(params["id"])
+func (ush *userHTTPRouter) Delete(c echo.Context) (err error) {
+	ush.log.LogMessage("Http request to delete one user with id ", c.Param("id"))
 
-	ush.log.LogMessage("Http request to delete one user with id ", id)
-
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		Respond(w, Message(false, "Error while decoding request body"))
-		return
+		return echo.NewHTTPError(http.StatusBadRequest, "Error while decoding request body:"+err.Error())
 	}
 
-	err = ush.uc.DeleteUserById(id)
+	err = ush.uc.DeleteUserByID(id)
 	if err != nil {
-		resp := Message(true, "Error while delete user")
-		Respond(w, resp)
-		return
+		return echo.NewHTTPError(http.StatusInternalServerError, "Error while delete user:"+err.Error())
 	}
-	resp := Message(true, "success")
-	Respond(w, resp)
+
+	return c.JSON(http.StatusOK, id)
 }

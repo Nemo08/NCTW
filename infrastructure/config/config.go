@@ -19,19 +19,19 @@ type appConfig struct {
 func NewAppConfigLoader(l log.LogInterface) appConfig {
 	err := godotenv.Load()
 	if err != nil {
-		l.LogError("Error loading .env file")
+		l.LogError("Ошибка загрузки .env файла")
 
 	}
 	return appConfig{log: l}
 }
 
 func (ac appConfig) Get(param string) string {
-	ac.log.LogMessage("Read ENV param ", param, " = ", os.Getenv(param))
+	ac.log.LogMessage("Читаю переменную окружения '", param, "' = ", os.Getenv(param))
 	return os.Getenv(param)
 }
 
 func (ac appConfig) IsSet(param string) bool {
 	_, set := os.LookupEnv(param)
-	ac.log.LogMessage("Check ENV param ", param, " with result ", set)
+	ac.log.LogMessage("Проверяю переменную окружения '", param, "', она установлена")
 	return set
 }

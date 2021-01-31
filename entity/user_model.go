@@ -1,18 +1,26 @@
 package entity
 
 import (
-	"time"
-
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
-// User main model
+// User базовая структура
 type User struct {
-	ID        uuid.UUID  `gorm:"type:uuid;primary_key;"`
-	CreatedAt time.Time  `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
-	UpdatedAt time.Time  `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
-	DeletedAt *time.Time `sql:"index" json:"-"`
+	ID           uuid.UUID
+	Login        string
+	PasswordHash string
+	Email        string
+}
 
-	Login    string
-	Password string
+//NewUser конструктор
+func NewUser(login, password, email string) (User, error) {
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
+
+	return User{
+		ID:           uuid.New(),
+		Login:        login,
+		PasswordHash: string(hash[:]),
+		Email:        email,
+	}, err
 }

@@ -1,2 +1,2 @@
-cd app\nctw
+cd ..\cmd\nctw
 go build  -ldflags "-s -w"

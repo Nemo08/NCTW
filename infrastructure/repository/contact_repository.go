@@ -3,6 +3,7 @@ package repository
 import (
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
@@ -12,8 +13,28 @@ import (
 	log "github.com/Nemo08/NCTW/infrastructure/logger"
 )
 
+//DbContact стуктура для хранения Contact в базе
 type DbContact struct {
-	ent.Contact
+	ID        uuid.UUID  `gorm:"type:uuid;primary_key;"`
+	CreatedAt time.Time  `gorm:"default:CURRENT_TIMESTAMP"`
+	UpdatedAt time.Time  `gorm:"default:CURRENT_TIMESTAMP"`
+	DeletedAt *time.Time `sql:"index"`
+
+	Position string //должность
+}
+
+func db2contact(i DbContact) ent.Contact {
+	return ent.Contact{
+		ID:       i.ID,
+		Position: i.Position,
+	}
+}
+
+func contact2db(i ent.Contact) DbContact {
+	return DbContact{
+		ID:       i.ID,
+		Position: i.Position,
+	}
 }
 
 type contactRepositorySqlite struct {
@@ -21,6 +42,7 @@ type contactRepositorySqlite struct {
 	log log.LogInterface
 }
 
+//NewContactRepositorySqlite создание объекта репозитория для Contact
 func NewContactRepositorySqlite(l log.LogInterface, c cfg.ConfigInterface, db *gorm.DB) *contactRepositorySqlite {
 	return &contactRepositorySqlite{
 		db:  db,
@@ -28,57 +50,60 @@ func NewContactRepositorySqlite(l log.LogInterface, c cfg.ConfigInterface, db *g
 	}
 }
 
-func (cts *contactRepositorySqlite) Store(Contact ent.Contact) (ent.Contact, error) {
-	var c DbContact
-	c.Contact = Contact
-	a := uuid.New()
+func (cts *contactRepositorySqlite) Store(contact ent.Contact) (*ent.Contact, error) {
+	d := contact2db(contact)
+	d.ID = uuid.New()
 
-	c.ID = a
-	err_slice := cts.db.Create(&c).GetErrors()
-	if len(err_slice) != 0 {
-		for _, err := range err_slice {
+	errSlice := cts.db.Create(&d).GetErrors()
+	if len(errSlice) != 0 {
+		for _, err := range errSlice {
 			cts.log.LogError("Error while contact create", err)
 		}
-		return c.Contact, errors.New("Error while contact create")
+		return &contact, errors.New("Error while contact create")
 	}
-	return c.Contact, nil
+
+	c := db2contact(d)
+	return &c, nil
 }
 
 func (cts *contactRepositorySqlite) GetAllContacts() ([]*ent.Contact, error) {
-	var contacts []*ent.Contact
-	var dbcontacts []*DbContact
-	cts.db.Set("gorm:auto_preload", true).Find(&dbcontacts)
-	for _, c := range dbcontacts {
-		contacts = append(contacts, &c.Contact)
+	var c []*ent.Contact
+	var d []*DbContact
+	cts.db.Set("gorm:auto_preload", true).Find(&d)
+	for _, r := range d {
+		dbc := db2contact(*r)
+		c = append(c, &dbc)
 	}
-	return contacts, nil
+	return c, nil
 }
 
-func (cts *contactRepositorySqlite) FindById(id uuid.UUID) (*ent.Contact, error) {
-	var c DbContact
-	cts.db.Set("gorm:auto_preload", true).Where("id = ?", id).First(&c)
-	return &c.Contact, nil
+func (cts *contactRepositorySqlite) FindByID(id uuid.UUID) (*ent.Contact, error) {
+	var d DbContact
+	cts.db.Set("gorm:auto_preload", true).Where("id = ?", id).First(&d)
+	c := db2contact(d)
+	return &c, nil
 }
 
 func (cts *contactRepositorySqlite) Find(q string) ([]*ent.Contact, error) {
-	var contacts []*ent.Contact
-	var dbcontacts []*DbContact
-	cts.db.Set("gorm:auto_preload", true).Where("search_string LIKE ?", strings.ToLower("%"+q+"%")).Find(&dbcontacts)
-	for _, c := range dbcontacts {
-		contacts = append(contacts, &c.Contact)
+	var c []*ent.Contact
+	var d []*DbContact
+	cts.db.Set("gorm:auto_preload", true).Where("search_string LIKE ?", strings.ToLower("%"+q+"%")).Find(&d)
+	for _, r := range d {
+		dbc := db2contact(*r)
+		c = append(c, &dbc)
 	}
-	return contacts, nil
+	return c, nil
 }
 
-func (cts *contactRepositorySqlite) UpdateContact(Contact ent.Contact) (ent.Contact, error) {
-	var c DbContact
-	c.Contact = Contact
+func (cts *contactRepositorySqlite) UpdateContact(Contact ent.Contact) (*ent.Contact, error) {
+	d := contact2db(Contact)
 	//	c.SearchString = strings.ToLower(fmt.Sprintf("%v", c.Contact))
-	cts.db.Set("gorm:auto_preload", true).Where("id = ?", c.Contact.ID).Save(&c)
-	return c.Contact, nil
+	cts.db.Set("gorm:auto_preload", true).Where("id = ?", d.ID).Save(&d)
+	c := db2contact(d)
+	return &c, nil
 }
 
-func (cts *contactRepositorySqlite) DeleteContactById(id uuid.UUID) error {
+func (cts *contactRepositorySqlite) DeleteContactByID(id uuid.UUID) error {
 	cts.db.Where("id = ?", id).Delete(DbContact{})
 	return nil
 }
