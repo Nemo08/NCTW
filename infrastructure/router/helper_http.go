@@ -5,15 +5,11 @@ import (
 	"net/http"
 )
 
-//Message хз зачем
-func Message(message string) map[string]interface{} {
-	return map[string]interface{}{"message": message}
+func Message(status bool, message string) map[string]interface{} {
+	return map[string]interface{}{"status": status, "message": message}
 }
 
-//Respond формирует ответ HTTP
-func Respond(w http.ResponseWriter, data map[string]interface{}, statusCode int) {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.Header().Set("X-Content-Type-Options", "nosniff")
-	w.WriteHeader(statusCode)
+func Respond(w http.ResponseWriter, data map[string]interface{}) {
+	w.Header().Add("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(data)
 }

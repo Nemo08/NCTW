@@ -1,171 +1,155 @@
 package router
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/gorilla/mux"
 
 	ent "github.com/Nemo08/NCTW/entity"
 	log "github.com/Nemo08/NCTW/infrastructure/logger"
 	use "github.com/Nemo08/NCTW/usecase"
 )
 
-type jsonContact struct {
-	ID       uuid.UUID
-	Position string //должность
-}
-
-//json2contact Json объект копируем в Entity
-func json2contact(i jsonContact) ent.Contact {
-	return ent.Contact{
-		ID:       i.ID,
-		Position: i.Position,
-	}
-}
-
-//contact2json Entity объект копируем в Json
-func contact2json(i ent.Contact) jsonContact {
-	return jsonContact{
-		ID:       i.ID,
-		Position: i.Position,
-	}
-}
-
-type contactHTTPRouter struct {
+type contactHttpRouter struct {
 	uc  use.ContactUsecase
 	log log.LogInterface
 }
 
-//NewContactHTTPRouter роутер для контактов
-func NewContactHTTPRouter(l log.LogInterface, u use.ContactUsecase, g *echo.Group) {
-	l.LogMessage("Создаю роутер для contact")
+func NewContactHttpRouter(l log.LogInterface, u use.ContactUsecase, r *mux.Router) {
+	l.LogMessage("Set up contact router")
 
-	var us contactHTTPRouter
+	var us contactHttpRouter
 	us.uc = u
 	us.log = l
 
-	subr := g.Group("/contact")
-	subr.GET("", us.GetAllContacts)
-	subr.POST("", us.Store)
-	subr.GET("/:id", us.GetContact)
-	subr.GET("/search/:query", us.Find)
-	subr.PUT("", us.Update)
-	subr.DELETE("/:id", us.Delete)
+	subr := r.PathPrefix("/contact").Subrouter()
+	subr.HandleFunc("", us.GetAllContacts).Methods("GET")
+	subr.HandleFunc("", us.Store).Methods("POST")
+	subr.HandleFunc("/{id:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}}", us.GetContact).Methods("GET")
+	subr.HandleFunc("/search/{query}", us.Find).Methods("GET")
+	subr.HandleFunc("", us.Update).Methods("PUT")
+	subr.HandleFunc("/{id:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}}", us.Delete).Methods("DELETE")
 }
 
-func (ush *contactHTTPRouter) GetAllContacts(c echo.Context) (err error) {
+func (ush *contactHttpRouter) GetAllContacts(w http.ResponseWriter, r *http.Request) {
 	ush.log.LogMessage("Http request to get all contacts")
 
-	var u []*ent.Contact
-	var jscontacts []*jsonContact
-
-	u, err = ush.uc.GetAllContacts()
+	var contacts []*ent.Contact
+	contacts, err := ush.uc.GetAllContacts()
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "error:"+err.Error())
+		resp := Message(true, "error")
+		Respond(w, resp)
+		return
 	}
-
-	for _, d := range u {
-		j := contact2json(*d)
-		jscontacts = append(jscontacts, &j)
-	}
-
-	return c.JSON(http.StatusOK, jscontacts)
+	resp := Message(true, "success")
+	resp["data"] = contacts
+	Respond(w, resp)
 }
 
-func (ush *contactHTTPRouter) GetContact(c echo.Context) (err error) {
-	ush.log.LogMessage("Http request to get one contact with id ", c.Param("id"))
+func (ush *contactHttpRouter) GetContact(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	id, err := uuid.Parse(params["id"])
 
-	id, err := uuid.Parse(c.Param("id"))
+	ush.log.LogMessage("Http request to get one contact with id ", id)
+
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Error while decoding request body:"+err.Error())
+		Respond(w, Message(false, "Error while decoding request body"))
+		return
 	}
 
-	var u *ent.Contact
-	u, err = ush.uc.FindByID(id)
+	var Contact *ent.Contact
+	Contact, err = ush.uc.FindById(id)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "error:"+err.Error())
+		resp := Message(true, "error")
+		Respond(w, resp)
+		return
 	}
-
-	j := contact2json(*u)
-	return c.JSON(http.StatusOK, j)
+	resp := Message(true, "success")
+	resp["data"] = &Contact
+	Respond(w, resp)
 }
 
-func (ush *contactHTTPRouter) Find(c echo.Context) (err error) {
-	ush.log.LogMessage("Http request to find contacts with query ", c.Param("query"))
+func (ush *contactHttpRouter) Find(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	q := params["query"]
 
-	q := c.Param("query")
+	ush.log.LogMessage("Http request to find contacts with query ", q)
+
 	if len(q) < 3 {
-		return echo.NewHTTPError(http.StatusBadRequest, "Too short query string")
+		resp := Message(true, "Too short query string")
+		Respond(w, resp)
+		return
 	}
 
-	var u []*ent.Contact
-	u, err = ush.uc.Find(q)
+	var contacts []*ent.Contact
+	contacts, err := ush.uc.Find(q)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "error:"+err.Error())
+		resp := Message(true, "error")
+		Respond(w, resp)
+		return
 	}
-
-	var jscontacts []*jsonContact
-	for _, d := range u {
-		j := contact2json(*d)
-		jscontacts = append(jscontacts, &j)
-	}
-
-	return c.JSON(http.StatusOK, jscontacts)
+	resp := Message(true, "success")
+	resp["data"] = contacts
+	Respond(w, resp)
 }
 
-func (ush *contactHTTPRouter) Store(c echo.Context) (err error) {
+func (ush *contactHttpRouter) Store(w http.ResponseWriter, r *http.Request) {
 	ush.log.LogMessage("Http request to make one contact")
 
-	j := &jsonContact{}
-
-	if err = c.Bind(j); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Error while decoding request body: "+err.Error())
-	}
-
-	u, err := ent.NewContact(j.Position)
+	Contact := &ent.Contact{}
+	err := json.NewDecoder(r.Body).Decode(Contact)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Error while contact store: "+err.Error())
+		Respond(w, Message(false, "Error while decoding request body: "+err.Error()))
+		return
 	}
-
-	u2, err := ush.uc.AddContact(u)
+	resp := Message(true, "success")
+	resp["data"], err = ush.uc.AddContact(*Contact)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Error while contact store: "+err.Error())
+		Respond(w, Message(false, "Error while contact store: "+err.Error()))
+		return
 	}
 
-	*j = contact2json(*u2)
-	return c.JSON(http.StatusOK, j)
+	Respond(w, resp)
 }
 
-func (ush *contactHTTPRouter) Update(c echo.Context) (err error) {
+func (ush *contactHttpRouter) Update(w http.ResponseWriter, r *http.Request) {
 	ush.log.LogMessage("Http request to update one contact")
 
-	j := &jsonContact{}
-	if err = c.Bind(j); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Error while decoding request body: "+err.Error())
-	}
-
-	u, err := ush.uc.UpdateContact(json2contact(*j))
+	Contact := &ent.Contact{}
+	err := json.NewDecoder(r.Body).Decode(Contact)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Error while contact store: "+err.Error())
+		Respond(w, Message(false, "Error while decoding request body: "+err.Error()))
+		return
+	}
+	resp := Message(true, "success")
+	resp["data"], err = ush.uc.UpdateContact(*Contact)
+	if err != nil {
+		Respond(w, Message(false, "Error while contact store: "+err.Error()))
+		return
 	}
 
-	*j = contact2json(*u)
-	return c.JSON(http.StatusOK, j)
+	Respond(w, resp)
 }
 
-func (ush *contactHTTPRouter) Delete(c echo.Context) (err error) {
-	ush.log.LogMessage("Http request to delete one contact with id ", c.Param("id"))
+func (ush *contactHttpRouter) Delete(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	id, err := uuid.Parse(params["id"])
 
-	id, err := uuid.Parse(c.Param("id"))
+	ush.log.LogMessage("Http request to delete one contact with id ", id)
+
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Error while decoding request body:"+err.Error())
+		Respond(w, Message(false, "Error while decoding request body"))
+		return
 	}
 
-	err = ush.uc.DeleteContactByID(id)
+	err = ush.uc.DeleteContactById(id)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Error while delete contact:"+err.Error())
+		resp := Message(true, "Error while delete contact")
+		Respond(w, resp)
+		return
 	}
-
-	return c.JSON(http.StatusOK, id)
+	resp := Message(true, "success")
+	Respond(w, resp)
 }

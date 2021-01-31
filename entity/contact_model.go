@@ -1,19 +1,17 @@
 package entity
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 )
 
-//Contact основная модель
+//Contact main model
 type Contact struct {
-	ID       uuid.UUID
-	Position string //должность
-}
+	ID        uuid.UUID  `gorm:"type:uuid;primary_key;"`
+	CreatedAt time.Time  `gorm:"default:CURRENT_TIMESTAMP" json:"CreatedAt"`
+	UpdatedAt time.Time  `gorm:"default:CURRENT_TIMESTAMP" json:"UpdatedAt"`
+	DeletedAt *time.Time `sql:"index" json:"-"`
 
-//NewContact конструктор
-func NewContact(position string) (Contact, error) {
-	return Contact{
-		ID:       uuid.New(),
-		Position: position,
-	}, nil
+	Position string //должность
 }

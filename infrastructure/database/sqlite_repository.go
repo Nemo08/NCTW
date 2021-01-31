@@ -16,33 +16,30 @@ type sqliteRepository struct {
 	db *gorm.DB
 }
 
-//utflower служебная функция для регистронезависимого поиска в sqlite
 func utflower(s string) string {
 	return strings.ToLower(s)
 }
 
-//NewSqliteRepository новый объект репозитория sqlite
 func NewSqliteRepository(l log.LogInterface, c cfg.ConfigInterface) *sqliteRepository {
 	if !c.IsSet("DBTYPE") || !c.IsSet("DBCONNECTIONSTRING") {
-		l.LogError("Не установлены переменные окружения: DBTYPE или DBCONNECTIONSTRING")
+		l.LogError("Unable to get config: DBTYPE or DBCONNECTIONSTRING")
 		os.Exit(1)
 	}
 
 	dbtype := c.Get("DBTYPE")
-	if dbtype == "sqlite3" {
+
+	sql.Register("sqlite3_custom", &sqlite3.SQLiteDriver{
+		ConnectHook: func(conn *sqlite3.SQLiteConn) error {
+			if err := conn.RegisterFunc("utflower", utflower, true); err != nil {
+				return err
+			}
+
+			return nil
+		},
+	})
+
+	if c.Get("DBTYPE") == "sqlite3" {
 		dbtype = "sqlite3_custom"
-
-		//регистрируем свой драйвер для добавления в sqlite функции utflower
-		//для обеспечения регистронезависимого поиска
-		sql.Register("sqlite3_custom", &sqlite3.SQLiteDriver{
-			ConnectHook: func(conn *sqlite3.SQLiteConn) error {
-				if err := conn.RegisterFunc("utflower", utflower, true); err != nil {
-					return err
-				}
-
-				return nil
-			},
-		})
 	}
 
 	db, err := gorm.Open(dbtype, c.Get("DBCONNECTIONSTRING"))
@@ -54,6 +51,7 @@ func NewSqliteRepository(l log.LogInterface, c cfg.ConfigInterface) *sqliteRepos
 	}
 
 	//db.LogMode(true)
+
 	return &sqliteRepository{db: db}
 }
 
