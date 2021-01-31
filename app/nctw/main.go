@@ -2,9 +2,10 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
 	"os"
+
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 
 	cfg "github.com/Nemo08/NCTW/infrastructure/config"
 	db "github.com/Nemo08/NCTW/infrastructure/database"
@@ -12,7 +13,6 @@ import (
 	repo "github.com/Nemo08/NCTW/infrastructure/repository"
 	rout "github.com/Nemo08/NCTW/infrastructure/router"
 	use "github.com/Nemo08/NCTW/usecase"
-	"github.com/gorilla/mux"
 )
 
 func main() {
@@ -38,30 +38,24 @@ func main() {
 	contcase := use.NewContactUsecase(logger, contrepo)
 
 	//роуты и сервер
-	muxrouter := rout.NewMuxHTTPRouter(logger)
-	apiV1Router := muxrouter.GetRouter().PathPrefix("/api/v1").Subrouter()
+	e := echo.New()
+	e.HideBanner = true
+	e.Pre(middleware.RemoveTrailingSlash())
+	e.Use(middleware.RequestID())
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+	apiV1Router := e.Group("/api/v1")
+
 	rout.NewUserHTTPRouter(logger, ucase, apiV1Router)
 	rout.NewContactHTTPRouter(logger, contcase, apiV1Router)
-	rout.NewStaticHTTPRouter(logger, muxrouter.GetRouter())
+	rout.NewStaticHTTPRouter(logger, e)
 
-	muxrouter.GetRouter().Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
-		t, err := route.GetPathTemplate()
-		if err != nil {
-			return err
-		}
-		m, _ := route.GetMethods()
-		fmt.Println(t, m)
-		return nil
-	})
-
+	//запуск сервера
 	if !conf.IsSet("SERVEPORT") {
 		logger.LogError("Переменная окружения SERVEPORT для порта не установлена")
 		os.Exit(1)
 	}
 	port := conf.Get("SERVEPORT")
 	logger.LogMessage("Сервер запущен на порту " + port)
-	err := http.ListenAndServe(":"+port, muxrouter.GetRouter())
-	if err != nil {
-		logger.LogError(err)
-	}
+	e.Logger.Fatal(e.Start(":" + port))
 }

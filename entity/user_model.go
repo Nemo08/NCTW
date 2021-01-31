@@ -13,6 +13,7 @@ type User struct {
 	Email        string
 }
 
+//NewUser конструктор
 func NewUser(login, password, email string) (User, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
 
