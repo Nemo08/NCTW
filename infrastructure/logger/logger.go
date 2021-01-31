@@ -8,10 +8,7 @@ type stdLog struct {
 }
 
 func NewStdLogger() stdLog {
-	log.SetFormatter(&log.TextFormatter{
-		DisableColors: false,
-		FullTimestamp: true,
-	})
+	log.SetFormatter(&log.JSONFormatter{})
 	return stdLog{}
 }
 
