@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"gopkg.in/guregu/null.v4"
 
 	ent "github.com/Nemo08/NCTW/entity"
 	log "github.com/Nemo08/NCTW/infrastructure/logger"
@@ -13,7 +14,7 @@ import (
 
 type jsonContact struct {
 	ID       uuid.UUID
-	Position string //должность
+	Position null.String //должность
 }
 
 //json2contact Json объект копируем в Entity

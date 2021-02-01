@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"gopkg.in/guregu/null.v4"
 
 	ent "github.com/Nemo08/NCTW/entity"
 	log "github.com/Nemo08/NCTW/infrastructure/logger"
@@ -12,11 +13,11 @@ import (
 )
 
 type jsonUser struct {
-	ID           uuid.UUID `json:"id"`
-	Login        string    `json:"login"`
-	Password     string    `json:",omitempty"`
-	PasswordHash string    `json:"-"`
-	Email        string    `json:"email"`
+	ID           uuid.UUID   `json:"id"`
+	Login        null.String `json:"login"`
+	Password     null.String `json:",omitempty"`
+	PasswordHash null.String `json:"-"`
+	Email        null.String `json:"email"`
 }
 
 //json2user Json объект копируем в Entity
@@ -26,6 +27,7 @@ func json2user(i jsonUser) ent.User {
 		Login:        i.Login,
 		PasswordHash: i.PasswordHash,
 		Email:        i.Email,
+		Password:     i.Password,
 	}
 }
 

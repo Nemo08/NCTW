@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
+	"gopkg.in/guregu/null.v4"
 
 	ent "github.com/Nemo08/NCTW/entity"
 	cfg "github.com/Nemo08/NCTW/infrastructure/config"
@@ -15,30 +16,30 @@ import (
 
 //DbUser стуктура для хранения User в базе
 type DbUser struct {
-	ID           uuid.UUID  `gorm:"type:uuid;primary_key;"`
-	CreatedAt    time.Time  `gorm:"default:CURRENT_TIMESTAMP"`
-	UpdatedAt    time.Time  `gorm:"default:CURRENT_TIMESTAMP"`
-	DeletedAt    *time.Time `sql:"index"`
-	Login        *string    `gorm:"index;unique;not null"`
-	PasswordHash *string    `gorm:"not null"`
-	Email        *string    `gorm:"not null"`
+	ID           uuid.UUID   `gorm:"type:uuid;primary_key;"`
+	CreatedAt    time.Time   `gorm:"default:CURRENT_TIMESTAMP"`
+	UpdatedAt    time.Time   `gorm:"default:CURRENT_TIMESTAMP"`
+	DeletedAt    *time.Time  `sql:"index"`
+	Login        null.String `gorm:"index;unique"`
+	PasswordHash null.String
+	Email        null.String
 }
 
 func db2user(i DbUser) ent.User {
 	return ent.User{
 		ID:           i.ID,
-		Login:        *i.Login,
-		PasswordHash: *i.PasswordHash,
-		Email:        *i.Email,
+		Login:        i.Login,
+		PasswordHash: i.PasswordHash,
+		Email:        i.Email,
 	}
 }
 
 func user2db(i ent.User) DbUser {
 	return DbUser{
 		ID:           i.ID,
-		Login:        &i.Login,
-		PasswordHash: &i.PasswordHash,
-		Email:        &i.Email,
+		Login:        i.Login,
+		PasswordHash: i.PasswordHash,
+		Email:        i.Email,
 	}
 }
 
@@ -77,7 +78,12 @@ func (urs *userRepositorySqlite) Store(user ent.User) (*ent.User, error) {
 func (urs *userRepositorySqlite) GetAllUsers() ([]*ent.User, error) {
 	var users []*ent.User
 	var DbUsers []*DbUser
-	urs.db.Find(&DbUsers)
+
+	g := urs.db.Find(&DbUsers)
+	if g.Error != nil {
+		return users, g.Error
+	}
+
 	for _, d := range DbUsers {
 		e := db2user(*d)
 		users = append(users, &e)
@@ -88,16 +94,26 @@ func (urs *userRepositorySqlite) GetAllUsers() ([]*ent.User, error) {
 
 func (urs *userRepositorySqlite) FindByID(id uuid.UUID) (*ent.User, error) {
 	var d DbUser
-	urs.db.Where("id = ?", id).First(&d)
-	e := db2user(d)
-	return &e, nil
+	var u ent.User
+
+	g := urs.db.Where("id = ?", id).First(&d)
+	if g.Error != nil {
+		return &u, g.Error
+	}
+
+	u = db2user(d)
+	return &u, nil
 }
 
 func (urs *userRepositorySqlite) Find(q string) ([]*ent.User, error) {
 	var users []*ent.User
 	var DbUsers []*DbUser
 
-	urs.db.Where("utflower(login) LIKE ?", strings.ToLower("%"+q+"%")).Find(&DbUsers)
+	g := urs.db.Where("utflower(login) LIKE ?", strings.ToLower("%"+q+"%")).Find(&DbUsers)
+	if g.Error != nil {
+		return users, g.Error
+	}
+
 	for _, d := range DbUsers {
 		e := db2user(*d)
 		users = append(users, &e)
@@ -107,20 +123,50 @@ func (urs *userRepositorySqlite) Find(q string) ([]*ent.User, error) {
 
 func (urs *userRepositorySqlite) UpdateUser(u ent.User) (*ent.User, error) {
 	d := user2db(u)
-	urs.db.Where("id = ?", d.ID).Save(&d)
-	r := db2user(d)
-	return &r, nil
+	attrs := make(map[string]interface{})
+
+	if !u.Email.IsZero() {
+		attrs["email"] = u.Email.String
+	}
+
+	if !u.Password.IsZero() {
+		hash, err := ent.CreateHash(u.Password.String)
+		if err != nil {
+			return &u, err
+		}
+		attrs["password_hash"] = hash
+		u.PasswordHash = null.StringFrom(hash)
+	}
+
+	g := urs.db.Debug().Model(&d).Where("id = ?", d.ID).Update(attrs)
+	if g.Error != nil {
+		return &u, g.Error
+	}
+
+	updatedUser, err := urs.FindByID(d.ID)
+	if err != nil {
+		return &u, err
+	}
+
+	return updatedUser, nil
 }
 
 func (urs *userRepositorySqlite) DeleteUserByID(id uuid.UUID) error {
-	urs.db.Where("id = ?", id).Delete(&DbUser{})
+	g := urs.db.Where("id = ?", id).Delete(&DbUser{})
+	if g.Error != nil {
+		return g.Error
+	}
 	return nil
 }
 
 func (urs *userRepositorySqlite) CheckPassword(login string, password string) (*ent.User, error) {
 	var d DbUser
+	var u ent.User
 
-	urs.db.Where("login = ? AND password = ?", login, password).Take(&d)
-	u := db2user(d)
+	g := urs.db.Where("login = ? AND password = ?", login, password).Take(&d)
+	if g.Error != nil {
+		return &u, g.Error
+	}
+	u = db2user(d)
 	return &u, nil
 }
