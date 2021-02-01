@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"gopkg.in/guregu/null.v4"
 
 	cfg "github.com/Nemo08/NCTW/infrastructure/config"
 	log "github.com/Nemo08/NCTW/infrastructure/logger"
@@ -24,8 +25,8 @@ func TestNewSqliteRepository(t *testing.T) {
 	ucase := use.NewUserUsecase(logger, userrepo)
 	a := ent.User{
 		ID:           uuid.New(),
-		Login:        "ЛОГин",
-		PasswordHash: "",
+		Login:        null.StringFrom("ЛОГин"),
+		PasswordHash: null.StringFrom(""),
 	}
 	d, err := ucase.AddUser(a)
 	u, err := ucase.Find("логин")
