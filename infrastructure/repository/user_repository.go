@@ -138,7 +138,7 @@ func (urs *userRepositorySqlite) UpdateUser(u ent.User) (*ent.User, error) {
 		u.PasswordHash = null.StringFrom(hash)
 	}
 
-	g := urs.db.Debug().Model(&d).Where("id = ?", d.ID).Update(attrs)
+	g := urs.db.Model(&d).Where("id = ?", d.ID).Update(attrs)
 	if g.Error != nil {
 		return &u, g.Error
 	}

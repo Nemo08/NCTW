@@ -99,9 +99,22 @@ func (cts *contactRepositorySqlite) Find(q string) ([]*ent.Contact, error) {
 func (cts *contactRepositorySqlite) UpdateContact(Contact ent.Contact) (*ent.Contact, error) {
 	d := contact2db(Contact)
 	//	c.SearchString = strings.ToLower(fmt.Sprintf("%v", c.Contact))
-	cts.db.Set("gorm:auto_preload", true).Where("id = ?", d.ID).Save(&d)
-	c := db2contact(d)
-	return &c, nil
+	attrs := make(map[string]interface{})
+
+	if !Contact.Position.IsZero() {
+		attrs["position"] = Contact.Position.String
+	}
+
+	g := cts.db.Model(&d).Where("id = ?", d.ID).Update(attrs)
+	if g.Error != nil {
+		return &Contact, g.Error
+	}
+
+	updatedContact, err := cts.FindByID(d.ID)
+	if err != nil {
+		return &Contact, err
+	}
+	return updatedContact, nil
 }
 
 func (cts *contactRepositorySqlite) DeleteContactByID(id uuid.UUID) error {
