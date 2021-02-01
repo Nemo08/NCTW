@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
+	"gopkg.in/guregu/null.v4"
 
 	ent "github.com/Nemo08/NCTW/entity"
 	cfg "github.com/Nemo08/NCTW/infrastructure/config"
@@ -20,7 +21,7 @@ type DbContact struct {
 	UpdatedAt time.Time  `gorm:"default:CURRENT_TIMESTAMP"`
 	DeletedAt *time.Time `sql:"index"`
 
-	Position string //должность
+	Position null.String //должность
 }
 
 func db2contact(i DbContact) ent.Contact {
