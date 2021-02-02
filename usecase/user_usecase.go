@@ -5,7 +5,6 @@ import (
 
 	ent "github.com/Nemo08/NCTW/entity"
 	log "github.com/Nemo08/NCTW/infrastructure/logger"
-	int "github.com/Nemo08/NCTW/interfaces"
 )
 
 //UserUsecase основная структура usecase
@@ -20,12 +19,12 @@ type UserUsecase interface {
 }
 
 type userUsecase struct {
-	repo int.UserRepository
+	repo UserRepository
 	log  log.LogInterface
 }
 
 //NewUserUsecase создание объекта usecase для User
-func NewUserUsecase(l log.LogInterface, r int.UserRepository) *userUsecase {
+func NewUserUsecase(l log.LogInterface, r UserRepository) *userUsecase {
 	return &userUsecase{
 		repo: r,
 		log:  l,

@@ -5,7 +5,6 @@ import (
 
 	ent "github.com/Nemo08/NCTW/entity"
 	log "github.com/Nemo08/NCTW/infrastructure/logger"
-	int "github.com/Nemo08/NCTW/interfaces"
 )
 
 //ContactUsecase основная структура usecase
@@ -19,12 +18,12 @@ type ContactUsecase interface {
 }
 
 type contactUsecase struct {
-	repo int.ContactRepository
+	repo ContactRepository
 	log  log.LogInterface
 }
 
 //NewContactUsecase создание объекта usecase для Contact
-func NewContactUsecase(l log.LogInterface, r int.ContactRepository) *contactUsecase {
+func NewContactUsecase(l log.LogInterface, r ContactRepository) *contactUsecase {
 	return &contactUsecase{
 		repo: r,
 		log:  l,

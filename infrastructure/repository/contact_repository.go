@@ -98,7 +98,6 @@ func (cts *contactRepositorySqlite) Find(q string) ([]*ent.Contact, error) {
 
 func (cts *contactRepositorySqlite) UpdateContact(Contact ent.Contact) (*ent.Contact, error) {
 	d := contact2db(Contact)
-	//	c.SearchString = strings.ToLower(fmt.Sprintf("%v", c.Contact))
 	attrs := make(map[string]interface{})
 
 	if !Contact.Position.IsZero() {
