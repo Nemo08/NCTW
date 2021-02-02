@@ -9,10 +9,10 @@ import (
 
 //UserUsecase основная структура usecase
 type UserUsecase interface {
-	GetAllUsers() ([]*ent.User, error)
+	GetUsers(limit, offset int) ([]*ent.User, int, error)
 	AddUser(User ent.User) (*ent.User, error)
 	FindByID(id uuid.UUID) (*ent.User, error)
-	Find(q string) ([]*ent.User, error)
+	Find(q string, limit, offset int) ([]*ent.User, int, error)
 	UpdateUser(User ent.User) (*ent.User, error)
 	DeleteUserByID(id uuid.UUID) error
 	CheckPassword(login string, password string) (*ent.User, error)
@@ -31,14 +31,14 @@ func NewUserUsecase(l log.LogInterface, r UserRepository) *UserUsecaseStruct {
 	}
 }
 
-func (uc *UserUsecaseStruct) GetAllUsers() ([]*ent.User, error) {
-	uc.log.LogMessage("Get all users")
+func (uc *UserUsecaseStruct) GetUsers(limit, offset int) ([]*ent.User, int, error) {
+	uc.log.LogMessage("Get users, limit:", limit, "offset:", offset)
 
-	users, err := uc.repo.GetAllUsers()
+	users, count, err := uc.repo.GetUsers(limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return users, nil
+	return users, count, nil
 }
 
 func (uc *UserUsecaseStruct) AddUser(u ent.User) (*ent.User, error) {
@@ -55,14 +55,14 @@ func (uc *UserUsecaseStruct) FindByID(id uuid.UUID) (*ent.User, error) {
 	return User, nil
 }
 
-func (uc *UserUsecaseStruct) Find(q string) ([]*ent.User, error) {
-	uc.log.LogMessage("Find string info in users:", q)
+func (uc *UserUsecaseStruct) Find(q string, limit, offset int) ([]*ent.User, int, error) {
+	uc.log.LogMessage("Find string info in users:", q, "limit:", limit, "offset:", offset)
 
-	users, err := uc.repo.Find(q)
+	users, count, err := uc.repo.Find(q, limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return users, nil
+	return users, count, nil
 }
 
 func (uc *UserUsecaseStruct) UpdateUser(u ent.User) (*ent.User, error) {

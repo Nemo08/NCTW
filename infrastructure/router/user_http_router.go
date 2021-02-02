@@ -1,7 +1,9 @@
 package router
 
 import (
+	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -56,20 +58,25 @@ func NewUserHTTPRouter(l log.LogInterface, u use.UserUsecase, g *echo.Group) {
 
 	subr := g.Group("/user")
 	subr.POST("", us.Store)
-	subr.GET("", us.GetAllUsers)
+	subr.GET("", us.GetUsers)
 	subr.GET("/:id", us.GetUser)
 	subr.GET("/search/:query", us.Find)
 	subr.PUT("", us.Update)
 	subr.DELETE("/:id", us.Delete)
 }
 
-func (ush *userHTTPRouter) GetAllUsers(c echo.Context) (err error) {
-	ush.log.LogMessage("Запрошены все пользователи")
+func (ush *userHTTPRouter) GetUsers(c echo.Context) (err error) {
+	ush.log.LogMessage("Запрошены пользователи постранично")
 
 	var u []*ent.User
 	var jsusers []*jsonUser
 
-	u, err = ush.uc.GetAllUsers()
+	limit, offset, err := ush.findLimits(c)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "error:"+err.Error())
+	}
+
+	u, count, err := ush.uc.GetUsers(limit, offset)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "error:"+err.Error())
 	}
@@ -79,6 +86,7 @@ func (ush *userHTTPRouter) GetAllUsers(c echo.Context) (err error) {
 		jsusers = append(jsusers, &j)
 	}
 
+	c.Response().Header().Set("X-Total-Count", strconv.Itoa(count))
 	return c.JSON(http.StatusOK, jsusers)
 }
 
@@ -108,8 +116,13 @@ func (ush *userHTTPRouter) Find(c echo.Context) (err error) {
 		return echo.NewHTTPError(http.StatusBadRequest, "Too short query string")
 	}
 
+	limit, offset, err := ush.findLimits(c)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "error:"+err.Error())
+	}
+
 	var u []*ent.User
-	u, err = ush.uc.Find(q)
+	u, count, err := ush.uc.Find(q, limit, offset)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "error:"+err.Error())
 	}
@@ -120,6 +133,7 @@ func (ush *userHTTPRouter) Find(c echo.Context) (err error) {
 		jsusers = append(jsusers, &j)
 	}
 
+	c.Response().Header().Set("X-Total-Count", strconv.Itoa(count))
 	return c.JSON(http.StatusOK, jsusers)
 }
 
@@ -177,4 +191,19 @@ func (ush *userHTTPRouter) Delete(c echo.Context) (err error) {
 	}
 
 	return c.JSON(http.StatusOK, id)
+}
+
+func (ush *userHTTPRouter) findLimits(c echo.Context) (l int, o int, e error) {
+	if (c.QueryParam("limit") == "") || (c.QueryParam("offset") == "") {
+		return 0, 0, errors.New("error: Not set limit or offset")
+	}
+	limit, err := strconv.Atoi(c.QueryParam("limit"))
+	if err != nil {
+		return 0, 0, err
+	}
+	offset, err := strconv.Atoi(c.QueryParam("offset"))
+	if err != nil {
+		return 0, 0, err
+	}
+	return limit, offset, nil
 }

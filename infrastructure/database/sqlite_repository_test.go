@@ -29,7 +29,7 @@ func TestNewSqliteRepository(t *testing.T) {
 		PasswordHash: null.StringFrom(""),
 	}
 	d, err := ucase.AddUser(a)
-	u, err := ucase.Find("логин")
+	u, _, err := ucase.Find("логин", 5, 0)
 	if err != nil {
 		t.Error("Ошибка в поиске пользователя ", err.Error())
 	}

@@ -75,13 +75,16 @@ func (urs *userRepositorySqlite) Store(user ent.User) (*ent.User, error) {
 	return &u, nil
 }
 
-func (urs *userRepositorySqlite) GetAllUsers() ([]*ent.User, error) {
+func (urs *userRepositorySqlite) GetUsers(limit, offset int) ([]*ent.User, int, error) {
 	var users []*ent.User
 	var DbUsers []*DbUser
+	var count int
 
-	g := urs.db.Find(&DbUsers)
+	urs.db.Model(&DbUsers).Count(&count)
+	g := urs.db.Scopes(paginate(limit, offset)).Find(&DbUsers)
+
 	if g.Error != nil {
-		return users, g.Error
+		return users, count, g.Error
 	}
 
 	for _, d := range DbUsers {
@@ -89,7 +92,7 @@ func (urs *userRepositorySqlite) GetAllUsers() ([]*ent.User, error) {
 		users = append(users, &e)
 	}
 
-	return users, nil
+	return users, count, nil
 }
 
 func (urs *userRepositorySqlite) FindByID(id uuid.UUID) (*ent.User, error) {
@@ -105,20 +108,24 @@ func (urs *userRepositorySqlite) FindByID(id uuid.UUID) (*ent.User, error) {
 	return &u, nil
 }
 
-func (urs *userRepositorySqlite) Find(q string) ([]*ent.User, error) {
+func (urs *userRepositorySqlite) Find(q string, limit, offset int) ([]*ent.User, int, error) {
 	var users []*ent.User
 	var DbUsers []*DbUser
+	var count int
 
-	g := urs.db.Where("utflower(login) LIKE ?", strings.ToLower("%"+q+"%")).Find(&DbUsers)
+	//считаем количество результатов в запросе
+	urs.db.Where("utflower(login) LIKE ?", strings.ToLower("%"+q+"%")).Find(&DbUsers).Count(&count)
+
+	g := urs.db.Scopes(paginate(limit, offset)).Where("utflower(login) LIKE ?", strings.ToLower("%"+q+"%")).Find(&DbUsers)
 	if g.Error != nil {
-		return users, g.Error
+		return users, 0, g.Error
 	}
 
 	for _, d := range DbUsers {
 		e := db2user(*d)
 		users = append(users, &e)
 	}
-	return users, nil
+	return users, count, nil
 }
 
 func (urs *userRepositorySqlite) UpdateUser(u ent.User) (*ent.User, error) {
