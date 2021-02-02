@@ -12,6 +12,7 @@ import (
 	use "github.com/Nemo08/NCTW/usecase"
 )
 
+//FillDatbaseByUsers заполняет базу фейковыми данными
 func FillDatbaseByUsers(uc *use.UserUsecaseStruct, c int) {
 	for i := 0; i < c; i++ {
 		prof := randomdata.GenerateProfile(1)
@@ -22,6 +23,7 @@ func FillDatbaseByUsers(uc *use.UserUsecaseStruct, c int) {
 		uc.AddUser(newuser)
 	}
 }
+
 func main() {
 	//логгер
 	logger := log.NewStdLogger()
