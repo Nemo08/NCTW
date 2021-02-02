@@ -18,20 +18,20 @@ type UserUsecase interface {
 	CheckPassword(login string, password string) (*ent.User, error)
 }
 
-type userUsecase struct {
+type UserUsecaseStruct struct {
 	repo UserRepository
 	log  log.LogInterface
 }
 
 //NewUserUsecase создание объекта usecase для User
-func NewUserUsecase(l log.LogInterface, r UserRepository) *userUsecase {
-	return &userUsecase{
+func NewUserUsecase(l log.LogInterface, r UserRepository) *UserUsecaseStruct {
+	return &UserUsecaseStruct{
 		repo: r,
 		log:  l,
 	}
 }
 
-func (uc *userUsecase) GetAllUsers() ([]*ent.User, error) {
+func (uc *UserUsecaseStruct) GetAllUsers() ([]*ent.User, error) {
 	uc.log.LogMessage("Get all users")
 
 	users, err := uc.repo.GetAllUsers()
@@ -41,12 +41,12 @@ func (uc *userUsecase) GetAllUsers() ([]*ent.User, error) {
 	return users, nil
 }
 
-func (uc *userUsecase) AddUser(u ent.User) (*ent.User, error) {
+func (uc *UserUsecaseStruct) AddUser(u ent.User) (*ent.User, error) {
 	uc.log.LogMessage("Add user", u)
 	return uc.repo.Store(u)
 }
 
-func (uc *userUsecase) FindByID(id uuid.UUID) (*ent.User, error) {
+func (uc *UserUsecaseStruct) FindByID(id uuid.UUID) (*ent.User, error) {
 	uc.log.LogMessage("Find user by id ", id)
 	User, err := uc.repo.FindByID(id)
 	if err != nil {
@@ -55,7 +55,7 @@ func (uc *userUsecase) FindByID(id uuid.UUID) (*ent.User, error) {
 	return User, nil
 }
 
-func (uc *userUsecase) Find(q string) ([]*ent.User, error) {
+func (uc *UserUsecaseStruct) Find(q string) ([]*ent.User, error) {
 	uc.log.LogMessage("Find string info in users:", q)
 
 	users, err := uc.repo.Find(q)
@@ -65,17 +65,17 @@ func (uc *userUsecase) Find(q string) ([]*ent.User, error) {
 	return users, nil
 }
 
-func (uc *userUsecase) UpdateUser(u ent.User) (*ent.User, error) {
+func (uc *UserUsecaseStruct) UpdateUser(u ent.User) (*ent.User, error) {
 	uc.log.LogMessage("Update user", u)
 	return uc.repo.UpdateUser(u)
 }
 
-func (uc *userUsecase) DeleteUserByID(id uuid.UUID) error {
+func (uc *UserUsecaseStruct) DeleteUserByID(id uuid.UUID) error {
 	uc.log.LogMessage("Delete user by id ", id)
 	return uc.repo.DeleteUserByID(id)
 }
 
-func (uc *userUsecase) CheckPassword(login string, password string) (*ent.User, error) {
+func (uc *UserUsecaseStruct) CheckPassword(login string, password string) (*ent.User, error) {
 	uc.log.LogMessage("Check password of ", login)
 	return uc.repo.CheckPassword(login, password)
 }

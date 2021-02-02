@@ -3,6 +3,7 @@ module github.com/Nemo08/NCTW
 go 1.15
 
 require (
+	github.com/Pallinder/go-randomdata v1.2.0
 	github.com/denisenkom/go-mssqldb v0.9.0 // indirect
 	github.com/google/uuid v1.2.0
 	github.com/jinzhu/gorm v1.9.16

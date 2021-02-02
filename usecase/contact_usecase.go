@@ -17,20 +17,20 @@ type ContactUsecase interface {
 	DeleteContactByID(id uuid.UUID) error
 }
 
-type contactUsecase struct {
+type ContactUsecaseStruct struct {
 	repo ContactRepository
 	log  log.LogInterface
 }
 
 //NewContactUsecase создание объекта usecase для Contact
-func NewContactUsecase(l log.LogInterface, r ContactRepository) *contactUsecase {
-	return &contactUsecase{
+func NewContactUsecase(l log.LogInterface, r ContactRepository) *ContactUsecaseStruct {
+	return &ContactUsecaseStruct{
 		repo: r,
 		log:  l,
 	}
 }
 
-func (uc *contactUsecase) GetAllContacts() ([]*ent.Contact, error) {
+func (uc *ContactUsecaseStruct) GetAllContacts() ([]*ent.Contact, error) {
 	uc.log.LogMessage("Get all contacts")
 
 	contacts, err := uc.repo.GetAllContacts()
@@ -40,12 +40,12 @@ func (uc *contactUsecase) GetAllContacts() ([]*ent.Contact, error) {
 	return contacts, nil
 }
 
-func (uc *contactUsecase) AddContact(u ent.Contact) (*ent.Contact, error) {
+func (uc *ContactUsecaseStruct) AddContact(u ent.Contact) (*ent.Contact, error) {
 	uc.log.LogMessage("Add contact", u)
 	return uc.repo.Store(u)
 }
 
-func (uc *contactUsecase) FindByID(id uuid.UUID) (*ent.Contact, error) {
+func (uc *ContactUsecaseStruct) FindByID(id uuid.UUID) (*ent.Contact, error) {
 	uc.log.LogMessage("Find contact by id ", id)
 	Contact, err := uc.repo.FindByID(id)
 	if err != nil {
@@ -54,7 +54,7 @@ func (uc *contactUsecase) FindByID(id uuid.UUID) (*ent.Contact, error) {
 	return Contact, nil
 }
 
-func (uc *contactUsecase) Find(q string) ([]*ent.Contact, error) {
+func (uc *ContactUsecaseStruct) Find(q string) ([]*ent.Contact, error) {
 	uc.log.LogMessage("Find string info in contacts:", q)
 
 	contacts, err := uc.repo.Find(q)
@@ -64,12 +64,12 @@ func (uc *contactUsecase) Find(q string) ([]*ent.Contact, error) {
 	return contacts, nil
 }
 
-func (uc *contactUsecase) UpdateContact(u ent.Contact) (*ent.Contact, error) {
+func (uc *ContactUsecaseStruct) UpdateContact(u ent.Contact) (*ent.Contact, error) {
 	uc.log.LogMessage("Update contact", u)
 	return uc.repo.UpdateContact(u)
 }
 
-func (uc *contactUsecase) DeleteContactByID(id uuid.UUID) error {
+func (uc *ContactUsecaseStruct) DeleteContactByID(id uuid.UUID) error {
 	uc.log.LogMessage("Delete contact by id ", id)
 	return uc.repo.DeleteContactByID(id)
 }
