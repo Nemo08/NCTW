@@ -134,6 +134,9 @@ func (ush *userHTTPRouter) Find(c echo.Context) (err error) {
 	}
 
 	c.Response().Header().Set("X-Total-Count", strconv.Itoa(count))
+	if len(jsusers) == 0 {
+		return c.NoContent(http.StatusOK)
+	}
 	return c.JSON(http.StatusOK, jsusers)
 }
 

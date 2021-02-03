@@ -115,12 +115,12 @@ func (urs *userRepositorySqlite) Find(q string, limit, offset int) ([]*ent.User,
 
 	//считаем количество результатов в запросе
 	urs.db.Where("utflower(login) LIKE ?", strings.ToLower("%"+q+"%")).Find(&DbUsers).Count(&count)
-
-	g := urs.db.Scopes(paginate(limit, offset)).Where("utflower(login) LIKE ?", strings.ToLower("%"+q+"%")).Find(&DbUsers)
+	g := urs.db.Scopes(paginate(limit, offset)).Where(
+		"(utflower(login) LIKE ?) OR (utflower(email) LIKE ?)",
+		strings.ToLower("%"+q+"%"), strings.ToLower("%"+q+"%")).Find(&DbUsers)
 	if g.Error != nil {
 		return users, 0, g.Error
 	}
-
 	for _, d := range DbUsers {
 		e := db2user(*d)
 		users = append(users, &e)
