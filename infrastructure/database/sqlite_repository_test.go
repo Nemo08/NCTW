@@ -20,7 +20,7 @@ func TestNewSqliteRepository(t *testing.T) {
 	sqliterepo := NewSqliteRepository(logger, conf)
 	defer sqliterepo.Close()
 
-	sqliterepo.Migrate(&repo.DbUser{}, &repo.DbContact{}, &repo.DbBranch{})
+	sqliterepo.Migrate(&repo.DbUser{})
 	userrepo := repo.NewUserRepositorySqlite(logger, conf, sqliterepo.GetDB())
 	ucase := use.NewUserUsecase(logger, userrepo)
 	a := ent.User{

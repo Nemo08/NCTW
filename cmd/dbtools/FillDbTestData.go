@@ -40,7 +40,7 @@ func main() {
 	//contrepo := repo.NewContactRepositorySqlite(logger, conf, sqliterepo.GetDB())
 
 	//Автомиграция таблиц
-	sqliterepo.Migrate(&repo.DbUser{}, &repo.DbContact{}, &repo.DbBranch{})
+	sqliterepo.Migrate(&repo.DbUser{})
 
 	//бизнес-логика
 	ucase := use.NewUserUsecase(logger, userrepo)

@@ -28,14 +28,12 @@ func main() {
 
 	//создаем репозитории объектов
 	userrepo := repo.NewUserRepositorySqlite(logger, conf, sqliterepo.GetDB())
-	contrepo := repo.NewContactRepositorySqlite(logger, conf, sqliterepo.GetDB())
 
 	//Автомиграция таблиц
-	sqliterepo.Migrate(&repo.DbUser{}, &repo.DbContact{}, &repo.DbBranch{})
+	sqliterepo.Migrate(&repo.DbUser{})
 
 	//бизнес-логика
 	ucase := use.NewUserUsecase(logger, userrepo)
-	contcase := use.NewContactUsecase(logger, contrepo)
 
 	//роуты и сервер
 	e := echo.New()
@@ -48,7 +46,6 @@ func main() {
 	apiV1Router := e.Group("/api/v1")
 
 	rout.NewUserHTTPRouter(logger, ucase, apiV1Router)
-	rout.NewContactHTTPRouter(logger, contcase, apiV1Router)
 	rout.NewStaticHTTPRouter(logger, e)
 
 	//запуск сервера
