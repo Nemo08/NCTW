@@ -44,16 +44,14 @@ func user2json(i ent.User) jsonUser {
 
 type userHTTPRouter struct {
 	uc  use.UserUsecase
-	log log.LogInterface
 }
 
 //NewUserHTTPRouter роутер пользователей
-func NewUserHTTPRouter(l log.LogInterface, u use.UserUsecase, g *echo.Group) {
-	l.LogMessage("Создаю роутер для user")
+func NewUserHTTPRouter(u use.UserUsecase, g *echo.Group) {
+	log.LogMessage("Создаю роутер для user")
 
 	us := userHTTPRouter{
 		uc:  u,
-		log: l,
 	}
 
 	subr := g.Group("/user")
@@ -66,7 +64,7 @@ func NewUserHTTPRouter(l log.LogInterface, u use.UserUsecase, g *echo.Group) {
 }
 
 func (ush *userHTTPRouter) GetUsers(c echo.Context) (err error) {
-	ush.log.LogMessage("Запрошены пользователи постранично")
+	log.LogMessage("Запрошены пользователи постранично")
 
 	var u []*ent.User
 	var jsusers []*jsonUser
@@ -91,7 +89,7 @@ func (ush *userHTTPRouter) GetUsers(c echo.Context) (err error) {
 }
 
 func (ush *userHTTPRouter) GetUser(c echo.Context) (err error) {
-	ush.log.LogMessage("Http request to get one user with id ", c.Param("id"))
+	log.LogMessage("Http request to get one user with id ", c.Param("id"))
 
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -109,7 +107,7 @@ func (ush *userHTTPRouter) GetUser(c echo.Context) (err error) {
 }
 
 func (ush *userHTTPRouter) Find(c echo.Context) (err error) {
-	ush.log.LogMessage("Http request to find users with query ", c.Param("query"))
+	log.LogMessage("Http request to find users with query ", c.Param("query"))
 
 	q := c.Param("query")
 	if len(q) < 3 {
@@ -141,7 +139,7 @@ func (ush *userHTTPRouter) Find(c echo.Context) (err error) {
 }
 
 func (ush *userHTTPRouter) Store(c echo.Context) (err error) {
-	ush.log.LogMessage("Http request to make one user")
+	log.LogMessage("Http request to make one user")
 
 	j := &jsonUser{}
 
@@ -164,7 +162,7 @@ func (ush *userHTTPRouter) Store(c echo.Context) (err error) {
 }
 
 func (ush *userHTTPRouter) Update(c echo.Context) (err error) {
-	ush.log.LogMessage("Http request to update one user")
+	log.LogMessage("Http request to update one user")
 
 	j := &jsonUser{}
 	if err = c.Bind(j); err != nil {
@@ -181,7 +179,7 @@ func (ush *userHTTPRouter) Update(c echo.Context) (err error) {
 }
 
 func (ush *userHTTPRouter) Delete(c echo.Context) (err error) {
-	ush.log.LogMessage("Http request to delete one user with id ", c.Param("id"))
+	log.LogMessage("Http request to delete one user with id ", c.Param("id"))
 
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {

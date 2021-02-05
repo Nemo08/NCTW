@@ -9,31 +9,28 @@ import (
 
 	cfg "github.com/Nemo08/NCTW/infrastructure/config"
 	db "github.com/Nemo08/NCTW/infrastructure/database"
-	log "github.com/Nemo08/NCTW/infrastructure/logger"
+	"github.com/Nemo08/NCTW/infrastructure/logger"
 	repo "github.com/Nemo08/NCTW/infrastructure/repository"
 	rout "github.com/Nemo08/NCTW/infrastructure/router"
 	use "github.com/Nemo08/NCTW/usecase"
 )
 
 func main() {
-	//логгер
-	logger := log.NewStdLogger()
-
 	//конфигуратор
-	conf := cfg.NewAppConfigLoader(logger)
+	conf := cfg.NewAppConfigLoader()
 
 	//база
-	sqliterepo := db.NewSqliteRepository(logger, conf)
+	sqliterepo := db.NewSqliteRepository(conf)
 	defer sqliterepo.Close()
 
 	//создаем репозитории объектов
-	userrepo := repo.NewUserRepositorySqlite(logger, conf, sqliterepo.GetDB())
+	userrepo := repo.NewUserRepositorySqlite(conf, sqliterepo.GetDB())
 
 	//Автомиграция таблиц
 	sqliterepo.Migrate(&repo.DbUser{})
 
 	//бизнес-логика
-	ucase := use.NewUserUsecase(logger, userrepo)
+	ucase := use.NewUserUsecase(userrepo)
 
 	//роуты и сервер
 	e := echo.New()
@@ -45,8 +42,8 @@ func main() {
 	e.Use(middleware.RequestID())
 	apiV1Router := e.Group("/api/v1")
 
-	rout.NewUserHTTPRouter(logger, ucase, apiV1Router)
-	rout.NewStaticHTTPRouter(logger, e)
+	rout.NewUserHTTPRouter(ucase, apiV1Router)
+	rout.NewStaticHTTPRouter(e)
 
 	//запуск сервера
 	if !conf.IsSet("SERVEPORT") {

@@ -7,7 +7,6 @@ import (
 	ent "github.com/Nemo08/NCTW/entity"
 	cfg "github.com/Nemo08/NCTW/infrastructure/config"
 	db "github.com/Nemo08/NCTW/infrastructure/database"
-	log "github.com/Nemo08/NCTW/infrastructure/logger"
 	repo "github.com/Nemo08/NCTW/infrastructure/repository"
 	use "github.com/Nemo08/NCTW/usecase"
 )
@@ -25,25 +24,22 @@ func FillDatbaseByUsers(uc *use.UserUsecaseStruct, c int) {
 }
 
 func main() {
-	//логгер
-	logger := log.NewStdLogger()
-
 	//конфигуратор
-	conf := cfg.NewAppConfigLoader(logger)
+	conf := cfg.NewAppConfigLoader()
 
 	//база
-	sqliterepo := db.NewSqliteRepository(logger, conf)
+	sqliterepo := db.NewSqliteRepository(conf)
 	defer sqliterepo.Close()
 
 	//создаем репозитории объектов
-	userrepo := repo.NewUserRepositorySqlite(logger, conf, sqliterepo.GetDB())
+	userrepo := repo.NewUserRepositorySqlite(conf, sqliterepo.GetDB())
 	//contrepo := repo.NewContactRepositorySqlite(logger, conf, sqliterepo.GetDB())
 
 	//Автомиграция таблиц
 	sqliterepo.Migrate(&repo.DbUser{})
 
 	//бизнес-логика
-	ucase := use.NewUserUsecase(logger, userrepo)
+	ucase := use.NewUserUsecase(userrepo)
 	//contcase := use.NewContactUsecase(logger, contrepo)
 	FillDatbaseByUsers(ucase, 100)
 }

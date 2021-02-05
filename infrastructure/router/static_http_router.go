@@ -7,8 +7,8 @@ import (
 )
 
 //NewStaticHTTPRouter роутер статики
-func NewStaticHTTPRouter(l log.LogInterface, e *echo.Echo) {
-	l.LogMessage("Создаю роутер статики")
+func NewStaticHTTPRouter(e *echo.Echo) {
+	log.LogMessage("Создаю роутер статики")
 
 	e.Static("/", "../../static")
 }

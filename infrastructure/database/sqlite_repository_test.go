@@ -7,7 +7,6 @@ import (
 	"gopkg.in/guregu/null.v4"
 
 	cfg "github.com/Nemo08/NCTW/infrastructure/config"
-	log "github.com/Nemo08/NCTW/infrastructure/logger"
 
 	ent "github.com/Nemo08/NCTW/entity"
 	repo "github.com/Nemo08/NCTW/infrastructure/repository"
@@ -15,14 +14,13 @@ import (
 )
 
 func TestNewSqliteRepository(t *testing.T) {
-	logger := log.NewStdLogger()
-	conf := cfg.NewCustomAppConfigLoader(logger)
-	sqliterepo := NewSqliteRepository(logger, conf)
+	conf := cfg.NewCustomAppConfigLoader()
+	sqliterepo := NewSqliteRepository(conf)
 	defer sqliterepo.Close()
 
 	sqliterepo.Migrate(&repo.DbUser{})
-	userrepo := repo.NewUserRepositorySqlite(logger, conf, sqliterepo.GetDB())
-	ucase := use.NewUserUsecase(logger, userrepo)
+	userrepo := repo.NewUserRepositorySqlite(conf, sqliterepo.GetDB())
+	ucase := use.NewUserUsecase(userrepo)
 	a := ent.User{
 		ID:           uuid.New(),
 		Login:        null.StringFrom("ЛОГин"),

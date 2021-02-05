@@ -45,14 +45,12 @@ func user2db(i ent.User) DbUser {
 
 type userRepositorySqlite struct {
 	db  *gorm.DB
-	log log.LogInterface
 }
 
 //NewUserRepositorySqlite создание объекта репозитория для User
-func NewUserRepositorySqlite(l log.LogInterface, c cfg.ConfigInterface, db *gorm.DB) *userRepositorySqlite {
+func NewUserRepositorySqlite(c cfg.ConfigInterface, db *gorm.DB) *userRepositorySqlite {
 	return &userRepositorySqlite{
 		db:  db,
-		log: l,
 	}
 }
 
@@ -66,7 +64,7 @@ func (urs *userRepositorySqlite) Store(user ent.User) (*ent.User, error) {
 	if len(errSlice) != 0 {
 
 		for _, err := range errSlice {
-			urs.log.LogError("Error while user create", err)
+			log.LogError("Error while user create", err)
 			estr = estr + err.Error()
 		}
 		return &user, errors.New("Error while user create:" + estr)
