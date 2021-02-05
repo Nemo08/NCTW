@@ -10,7 +10,6 @@ import (
 	"gopkg.in/guregu/null.v4"
 
 	ent "github.com/Nemo08/NCTW/entity"
-	cfg "github.com/Nemo08/NCTW/infrastructure/config"
 	log "github.com/Nemo08/NCTW/infrastructure/logger"
 )
 
@@ -44,13 +43,13 @@ func user2db(i ent.User) DbUser {
 }
 
 type userRepositorySqlite struct {
-	db  *gorm.DB
+	db *gorm.DB
 }
 
 //NewUserRepositorySqlite создание объекта репозитория для User
-func NewUserRepositorySqlite(c cfg.ConfigInterface, db *gorm.DB) *userRepositorySqlite {
+func NewUserRepositorySqlite(db *gorm.DB) *userRepositorySqlite {
 	return &userRepositorySqlite{
-		db:  db,
+		db: db,
 	}
 }
 

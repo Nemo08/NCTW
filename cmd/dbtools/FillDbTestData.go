@@ -32,7 +32,7 @@ func main() {
 	defer sqliterepo.Close()
 
 	//создаем репозитории объектов
-	userrepo := repo.NewUserRepositorySqlite(conf, sqliterepo.GetDB())
+	userrepo := repo.NewUserRepositorySqlite(sqliterepo.GetDB())
 	//contrepo := repo.NewContactRepositorySqlite(logger, conf, sqliterepo.GetDB())
 
 	//Автомиграция таблиц

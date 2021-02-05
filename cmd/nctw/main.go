@@ -9,9 +9,10 @@ import (
 
 	cfg "github.com/Nemo08/NCTW/infrastructure/config"
 	db "github.com/Nemo08/NCTW/infrastructure/database"
-	"github.com/Nemo08/NCTW/infrastructure/logger"
+	log "github.com/Nemo08/NCTW/infrastructure/logger"
 	repo "github.com/Nemo08/NCTW/infrastructure/repository"
 	rout "github.com/Nemo08/NCTW/infrastructure/router"
+	vld "github.com/Nemo08/NCTW/infrastructure/validator"
 	use "github.com/Nemo08/NCTW/usecase"
 )
 
@@ -19,15 +20,18 @@ func main() {
 	//конфигуратор
 	conf := cfg.NewAppConfigLoader()
 
+	//валидатор
+	vld.NewValidator()
+
 	//база
-	sqliterepo := db.NewSqliteRepository(conf)
-	defer sqliterepo.Close()
+	database := db.NewSqliteRepository(conf)
+	defer database.Close()
 
 	//создаем репозитории объектов
-	userrepo := repo.NewUserRepositorySqlite(conf, sqliterepo.GetDB())
+	userrepo := repo.NewUserRepositorySqlite(database.GetDB())
 
 	//Автомиграция таблиц
-	sqliterepo.Migrate(&repo.DbUser{})
+	database.Migrate(&repo.DbUser{})
 
 	//бизнес-логика
 	ucase := use.NewUserUsecase(userrepo)
@@ -47,10 +51,10 @@ func main() {
 
 	//запуск сервера
 	if !conf.IsSet("SERVEPORT") {
-		logger.LogError("Переменная окружения SERVEPORT для порта не установлена")
+		log.LogError("Переменная окружения SERVEPORT для порта не установлена")
 		os.Exit(1)
 	}
 	port := conf.Get("SERVEPORT")
-	logger.LogMessage("Сервер запущен на порту " + port)
+	log.LogMessage("Сервер запущен на порту " + port)
 	e.Logger.Fatal(e.Start(":" + port))
 }
