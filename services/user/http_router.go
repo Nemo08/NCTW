@@ -1,4 +1,4 @@
-package router
+package user
 
 import (
 	"errors"
@@ -9,9 +9,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"gopkg.in/guregu/null.v4"
 
-	ent "github.com/Nemo08/NCTW/entity"
 	log "github.com/Nemo08/NCTW/infrastructure/logger"
-	use "github.com/Nemo08/NCTW/usecase"
 )
 
 type jsonUser struct {
@@ -23,8 +21,8 @@ type jsonUser struct {
 }
 
 //json2user Json объект копируем в Entity
-func json2user(i jsonUser) ent.User {
-	return ent.User{
+func json2user(i jsonUser) User {
+	return User{
 		ID:           i.ID,
 		Login:        i.Login,
 		PasswordHash: i.PasswordHash,
@@ -34,7 +32,7 @@ func json2user(i jsonUser) ent.User {
 }
 
 //user2json Entity объект копируем в Json
-func user2json(i ent.User) jsonUser {
+func user2json(i User) jsonUser {
 	return jsonUser{
 		ID:    i.ID,
 		Login: i.Login,
@@ -43,15 +41,15 @@ func user2json(i ent.User) jsonUser {
 }
 
 type userHTTPRouter struct {
-	uc  use.UserUsecase
+	uc UserUsecase
 }
 
 //NewUserHTTPRouter роутер пользователей
-func NewUserHTTPRouter(u use.UserUsecase, g *echo.Group) {
+func NewUserHTTPRouter(u UserUsecase, g *echo.Group) {
 	log.LogMessage("Создаю роутер для user")
 
 	us := userHTTPRouter{
-		uc:  u,
+		uc: u,
 	}
 
 	subr := g.Group("/user")
@@ -66,7 +64,7 @@ func NewUserHTTPRouter(u use.UserUsecase, g *echo.Group) {
 func (ush *userHTTPRouter) GetUsers(c echo.Context) (err error) {
 	log.LogMessage("Запрошены пользователи постранично")
 
-	var u []*ent.User
+	var u []*User
 	var jsusers []*jsonUser
 
 	limit, offset, err := ush.findLimits(c)
@@ -96,7 +94,7 @@ func (ush *userHTTPRouter) GetUser(c echo.Context) (err error) {
 		return echo.NewHTTPError(http.StatusBadRequest, "Error while decoding request body:"+err.Error())
 	}
 
-	var u *ent.User
+	var u *User
 	u, err = ush.uc.FindByID(id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "error:"+err.Error())
@@ -119,7 +117,7 @@ func (ush *userHTTPRouter) Find(c echo.Context) (err error) {
 		return echo.NewHTTPError(http.StatusBadRequest, "error:"+err.Error())
 	}
 
-	var u []*ent.User
+	var u []*User
 	u, count, err := ush.uc.Find(q, limit, offset)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "error:"+err.Error())
@@ -147,7 +145,7 @@ func (ush *userHTTPRouter) Store(c echo.Context) (err error) {
 		return echo.NewHTTPError(http.StatusBadRequest, "Error while decoding request body: "+err.Error())
 	}
 
-	u, err := ent.NewUser(j.Login, j.Password, j.Email)
+	u, err := NewUser(j.Login, j.Password, j.Email)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error while user store: "+err.Error())
 	}
