@@ -12,6 +12,7 @@ import (
 	log "github.com/Nemo08/NCTW/infrastructure/logger"
 	rout "github.com/Nemo08/NCTW/infrastructure/router"
 	vld "github.com/Nemo08/NCTW/infrastructure/validator"
+	api "github.com/Nemo08/NCTW/services/api"
 	user "github.com/Nemo08/NCTW/services/user"
 )
 
@@ -43,7 +44,7 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.RequestID())
-	e.Use(rout.CustomApiContext)
+	e.Use(api.CustomContext)
 	apiV1Router := e.Group("/api/v1")
 
 	user.NewUserHTTPRouter(ucase, apiV1Router)

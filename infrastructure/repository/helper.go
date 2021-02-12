@@ -5,10 +5,10 @@ import (
 
 	"github.com/jinzhu/gorm"
 
-	"github.com/Nemo08/NCTW/infrastructure/router"
+	"github.com/Nemo08/NCTW/services/api"
 )
 
-func Paginate(ctx router.ApiContext) func(db *gorm.DB) *gorm.DB {
+func Paginate(ctx api.Context) func(db *gorm.DB) *gorm.DB {
 	limit, offset, order, error := findLimits(ctx)
 	if error != nil {
 		return func(db *gorm.DB) *gorm.DB {
@@ -28,7 +28,7 @@ func Paginate(ctx router.ApiContext) func(db *gorm.DB) *gorm.DB {
 }
 
 //findLimits достает из контекста запроса лимиты, смещение
-func findLimits(ctx router.ApiContext) (l int, o int, ord string, e error) {
+func findLimits(ctx api.Context) (l int, o int, ord string, e error) {
 	limit := 0
 	offset := 0
 	order := ""

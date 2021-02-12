@@ -11,7 +11,7 @@ import (
 
 	log "github.com/Nemo08/NCTW/infrastructure/logger"
 	repo "github.com/Nemo08/NCTW/infrastructure/repository"
-	"github.com/Nemo08/NCTW/infrastructure/router"
+	"github.com/Nemo08/NCTW/services/api"
 )
 
 //DbUser стуктура для хранения User в базе
@@ -54,7 +54,7 @@ func NewUserRepositorySqlite(db *gorm.DB) *userRepositorySqlite {
 	}
 }
 
-func (urs *userRepositorySqlite) Store(ctx router.ApiContext, user User) (*User, error) {
+func (urs *userRepositorySqlite) Store(ctx api.Context, user User) (*User, error) {
 	var d DbUser = user2db(user)
 	d.ID = uuid.New()
 
@@ -72,7 +72,7 @@ func (urs *userRepositorySqlite) Store(ctx router.ApiContext, user User) (*User,
 	return &u, nil
 }
 
-func (urs *userRepositorySqlite) GetUsers(ctx router.ApiContext) ([]*User, int, error) {
+func (urs *userRepositorySqlite) GetUsers(ctx api.Context) ([]*User, int, error) {
 	var users []*User
 	var DbUsers []*DbUser
 	var count int
@@ -92,7 +92,7 @@ func (urs *userRepositorySqlite) GetUsers(ctx router.ApiContext) ([]*User, int, 
 	return users, count, nil
 }
 
-func (urs *userRepositorySqlite) FindByID(ctx router.ApiContext, id uuid.UUID) (*User, error) {
+func (urs *userRepositorySqlite) FindByID(ctx api.Context, id uuid.UUID) (*User, error) {
 	var d DbUser
 	var u User
 
@@ -105,7 +105,7 @@ func (urs *userRepositorySqlite) FindByID(ctx router.ApiContext, id uuid.UUID) (
 	return &u, nil
 }
 
-func (urs *userRepositorySqlite) Find(ctx router.ApiContext, q string) ([]*User, int, error) {
+func (urs *userRepositorySqlite) Find(ctx api.Context, q string) ([]*User, int, error) {
 	var users []*User
 	var DbUsers []*DbUser
 	var count int
@@ -125,7 +125,7 @@ func (urs *userRepositorySqlite) Find(ctx router.ApiContext, q string) ([]*User,
 	return users, count, nil
 }
 
-func (urs *userRepositorySqlite) UpdateUser(ctx router.ApiContext, u User) (*User, error) {
+func (urs *userRepositorySqlite) UpdateUser(ctx api.Context, u User) (*User, error) {
 	d := user2db(u)
 	attrs := make(map[string]interface{})
 
@@ -155,7 +155,7 @@ func (urs *userRepositorySqlite) UpdateUser(ctx router.ApiContext, u User) (*Use
 	return updatedUser, nil
 }
 
-func (urs *userRepositorySqlite) DeleteUserByID(ctx router.ApiContext, id uuid.UUID) error {
+func (urs *userRepositorySqlite) DeleteUserByID(ctx api.Context, id uuid.UUID) error {
 	g := urs.db.Where("id = ?", id).Delete(&DbUser{})
 	if g.Error != nil {
 		return g.Error
