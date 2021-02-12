@@ -15,7 +15,7 @@ import (
 
 //DbUser стуктура для хранения User в базе
 type DbUser struct {
-	ID           uuid.UUID   `gorm:"type:uuid;primary_key;"`
+	ID           uuid.UUID   `gorm:"type:uuid;primaryKey;PrioritizedPrimaryField"`
 	CreatedAt    time.Time   `gorm:"default:CURRENT_TIMESTAMP"`
 	UpdatedAt    time.Time   `gorm:"default:CURRENT_TIMESTAMP"`
 	DeletedAt    *time.Time  `sql:"index"`
