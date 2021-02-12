@@ -7,6 +7,7 @@ import (
 	"gopkg.in/guregu/null.v4"
 
 	cfg "github.com/Nemo08/NCTW/infrastructure/config"
+	"github.com/Nemo08/NCTW/infrastructure/router"
 
 	user "github.com/Nemo08/NCTW/services/user"
 )
@@ -24,8 +25,12 @@ func TestNewSqliteRepository(t *testing.T) {
 		Login:        null.StringFrom("ЛОГин"),
 		PasswordHash: null.StringFrom(""),
 	}
-	d, err := ucase.AddUser(a)
-	u, _, err := ucase.Find("логин", 5, 0)
+	d, err := ucase.AddUser(router.ApiContext{}, a)
+	if err != nil {
+		t.Error("Ошибка в добавлении пользователя ", err.Error())
+	}
+
+	u, _, err := ucase.Find(router.ApiContext{}, "логин")
 	if err != nil {
 		t.Error("Ошибка в поиске пользователя ", err.Error())
 	}

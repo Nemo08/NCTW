@@ -11,6 +11,7 @@ import (
 
 	log "github.com/Nemo08/NCTW/infrastructure/logger"
 	repo "github.com/Nemo08/NCTW/infrastructure/repository"
+	"github.com/Nemo08/NCTW/infrastructure/router"
 )
 
 //DbUser стуктура для хранения User в базе
@@ -53,9 +54,8 @@ func NewUserRepositorySqlite(db *gorm.DB) *userRepositorySqlite {
 	}
 }
 
-func (urs *userRepositorySqlite) Store(user User) (*User, error) {
-	var d DbUser
-	d = user2db(user)
+func (urs *userRepositorySqlite) Store(ctx router.ApiContext, user User) (*User, error) {
+	var d DbUser = user2db(user)
 	d.ID = uuid.New()
 
 	errSlice := urs.db.Create(&d).GetErrors()
@@ -72,13 +72,13 @@ func (urs *userRepositorySqlite) Store(user User) (*User, error) {
 	return &u, nil
 }
 
-func (urs *userRepositorySqlite) GetUsers(limit, offset int) ([]*User, int, error) {
+func (urs *userRepositorySqlite) GetUsers(ctx router.ApiContext) ([]*User, int, error) {
 	var users []*User
 	var DbUsers []*DbUser
 	var count int
 
 	urs.db.Model(&DbUsers).Count(&count)
-	g := urs.db.Scopes(repo.Paginate(limit, offset)).Find(&DbUsers)
+	g := urs.db.Scopes(repo.Paginate(ctx)).Find(&DbUsers)
 
 	if g.Error != nil {
 		return users, count, g.Error
@@ -92,7 +92,7 @@ func (urs *userRepositorySqlite) GetUsers(limit, offset int) ([]*User, int, erro
 	return users, count, nil
 }
 
-func (urs *userRepositorySqlite) FindByID(id uuid.UUID) (*User, error) {
+func (urs *userRepositorySqlite) FindByID(ctx router.ApiContext, id uuid.UUID) (*User, error) {
 	var d DbUser
 	var u User
 
@@ -105,14 +105,14 @@ func (urs *userRepositorySqlite) FindByID(id uuid.UUID) (*User, error) {
 	return &u, nil
 }
 
-func (urs *userRepositorySqlite) Find(q string, limit, offset int) ([]*User, int, error) {
+func (urs *userRepositorySqlite) Find(ctx router.ApiContext, q string) ([]*User, int, error) {
 	var users []*User
 	var DbUsers []*DbUser
 	var count int
 
 	//считаем количество результатов в запросе
 	urs.db.Where("utflower(login) LIKE ?", strings.ToLower("%"+q+"%")).Find(&DbUsers).Count(&count)
-	g := urs.db.Scopes(repo.Paginate(limit, offset)).Where(
+	g := urs.db.Scopes(repo.Paginate(ctx)).Where(
 		"(utflower(login) LIKE ?) OR (utflower(email) LIKE ?)",
 		strings.ToLower("%"+q+"%"), strings.ToLower("%"+q+"%")).Find(&DbUsers)
 	if g.Error != nil {
@@ -125,7 +125,7 @@ func (urs *userRepositorySqlite) Find(q string, limit, offset int) ([]*User, int
 	return users, count, nil
 }
 
-func (urs *userRepositorySqlite) UpdateUser(u User) (*User, error) {
+func (urs *userRepositorySqlite) UpdateUser(ctx router.ApiContext, u User) (*User, error) {
 	d := user2db(u)
 	attrs := make(map[string]interface{})
 
@@ -147,7 +147,7 @@ func (urs *userRepositorySqlite) UpdateUser(u User) (*User, error) {
 		return &u, g.Error
 	}
 
-	updatedUser, err := urs.FindByID(d.ID)
+	updatedUser, err := urs.FindByID(ctx, d.ID)
 	if err != nil {
 		return &u, err
 	}
@@ -155,7 +155,7 @@ func (urs *userRepositorySqlite) UpdateUser(u User) (*User, error) {
 	return updatedUser, nil
 }
 
-func (urs *userRepositorySqlite) DeleteUserByID(id uuid.UUID) error {
+func (urs *userRepositorySqlite) DeleteUserByID(ctx router.ApiContext, id uuid.UUID) error {
 	g := urs.db.Where("id = ?", id).Delete(&DbUser{})
 	if g.Error != nil {
 		return g.Error

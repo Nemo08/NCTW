@@ -1,7 +1,6 @@
 package user
 
 import (
-	"errors"
 	"net/http"
 	"strconv"
 
@@ -10,8 +9,12 @@ import (
 	"gopkg.in/guregu/null.v4"
 
 	log "github.com/Nemo08/NCTW/infrastructure/logger"
+	"github.com/Nemo08/NCTW/infrastructure/router"
 )
 
+type CustomContext struct {
+	echo.Context
+}
 type jsonUser struct {
 	ID           uuid.UUID   `json:"id"`
 	Login        null.String `json:"login"`
@@ -67,12 +70,7 @@ func (ush *userHTTPRouter) GetUsers(c echo.Context) (err error) {
 	var u []*User
 	var jsusers []*jsonUser
 
-	limit, offset, err := ush.findLimits(c)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "error:"+err.Error())
-	}
-
-	u, count, err := ush.uc.GetUsers(limit, offset)
+	u, count, err := ush.uc.GetUsers(c.(router.ApiContext))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "error:"+err.Error())
 	}
@@ -95,7 +93,7 @@ func (ush *userHTTPRouter) GetUser(c echo.Context) (err error) {
 	}
 
 	var u *User
-	u, err = ush.uc.FindByID(id)
+	u, err = ush.uc.FindByID(c.(router.ApiContext), id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "error:"+err.Error())
 	}
@@ -112,13 +110,8 @@ func (ush *userHTTPRouter) Find(c echo.Context) (err error) {
 		return echo.NewHTTPError(http.StatusBadRequest, "Too short query string")
 	}
 
-	limit, offset, err := ush.findLimits(c)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "error:"+err.Error())
-	}
-
 	var u []*User
-	u, count, err := ush.uc.Find(q, limit, offset)
+	u, count, err := ush.uc.Find(c.(router.ApiContext), q)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "error:"+err.Error())
 	}
@@ -150,7 +143,7 @@ func (ush *userHTTPRouter) Store(c echo.Context) (err error) {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error while user store: "+err.Error())
 	}
 
-	u2, err := ush.uc.AddUser(u)
+	u2, err := ush.uc.AddUser(c.(router.ApiContext), u)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error while user store: "+err.Error())
 	}
@@ -167,7 +160,7 @@ func (ush *userHTTPRouter) Update(c echo.Context) (err error) {
 		return echo.NewHTTPError(http.StatusBadRequest, "Error while decoding request body: "+err.Error())
 	}
 
-	u, err := ush.uc.UpdateUser(json2user(*j))
+	u, err := ush.uc.UpdateUser(c.(router.ApiContext), json2user(*j))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error while user store: "+err.Error())
 	}
@@ -184,25 +177,10 @@ func (ush *userHTTPRouter) Delete(c echo.Context) (err error) {
 		return echo.NewHTTPError(http.StatusBadRequest, "Error while decoding request body:"+err.Error())
 	}
 
-	err = ush.uc.DeleteUserByID(id)
+	err = ush.uc.DeleteUserByID(c.(router.ApiContext), id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error while delete user:"+err.Error())
 	}
 
 	return c.JSON(http.StatusOK, id)
-}
-
-func (ush *userHTTPRouter) findLimits(c echo.Context) (l int, o int, e error) {
-	if (c.QueryParam("limit") == "") || (c.QueryParam("offset") == "") {
-		return 0, 0, errors.New("error: Not set limit or offset")
-	}
-	limit, err := strconv.Atoi(c.QueryParam("limit"))
-	if err != nil {
-		return 0, 0, err
-	}
-	offset, err := strconv.Atoi(c.QueryParam("offset"))
-	if err != nil {
-		return 0, 0, err
-	}
-	return limit, offset, nil
 }

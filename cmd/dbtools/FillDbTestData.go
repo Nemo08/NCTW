@@ -6,6 +6,7 @@ import (
 
 	cfg "github.com/Nemo08/NCTW/infrastructure/config"
 	db "github.com/Nemo08/NCTW/infrastructure/database"
+	"github.com/Nemo08/NCTW/infrastructure/router"
 	user "github.com/Nemo08/NCTW/services/user"
 )
 
@@ -17,7 +18,7 @@ func FillDatbaseByUsers(uc *user.UserUsecaseStruct, c int) {
 			null.NewString(prof.Name.First+prof.Name.Last+randomdata.Digits(3), true),
 			null.NewString(prof.Login.Password, true),
 			null.NewString(prof.Email+randomdata.Digits(3), true))
-		uc.AddUser(newuser)
+		uc.AddUser(router.ApiContext{}, newuser)
 	}
 }
 

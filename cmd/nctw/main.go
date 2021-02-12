@@ -43,6 +43,7 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.RequestID())
+	e.Use(rout.CustomApiContext)
 	apiV1Router := e.Group("/api/v1")
 
 	user.NewUserHTTPRouter(ucase, apiV1Router)

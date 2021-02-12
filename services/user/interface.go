@@ -1,16 +1,18 @@
 package user
 
 import (
+	"github.com/Nemo08/NCTW/infrastructure/router"
+
 	"github.com/google/uuid"
 )
 
 //UserRepository объект репозитория User
 type UserRepository interface {
-	Store(User User) (*User, error)
-	GetUsers(limit, offset int) ([]*User, int, error)
-	FindByID(id uuid.UUID) (*User, error)
-	Find(q string, limit, offset int) ([]*User, int, error)
-	UpdateUser(User User) (*User, error)
-	DeleteUserByID(id uuid.UUID) error
+	Store(ctx router.ApiContext, User User) (*User, error)
+	GetUsers(ctx router.ApiContext) ([]*User, int, error)
+	FindByID(ctx router.ApiContext, id uuid.UUID) (*User, error)
+	Find(ctx router.ApiContext, q string) ([]*User, int, error)
+	UpdateUser(ctx router.ApiContext, User User) (*User, error)
+	DeleteUserByID(ctx router.ApiContext, id uuid.UUID) error
 	CheckPassword(login string, password string) (*User, error)
 }
