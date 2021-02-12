@@ -8,9 +8,7 @@ import (
 
 	cfg "github.com/Nemo08/NCTW/infrastructure/config"
 
-	ent "github.com/Nemo08/NCTW/entity"
-	repo "github.com/Nemo08/NCTW/infrastructure/repository"
-	use "github.com/Nemo08/NCTW/usecase"
+	user "github.com/Nemo08/NCTW/services/user"
 )
 
 func TestNewSqliteRepository(t *testing.T) {
@@ -18,10 +16,10 @@ func TestNewSqliteRepository(t *testing.T) {
 	sqliterepo := NewSqliteRepository(conf)
 	defer sqliterepo.Close()
 
-	sqliterepo.Migrate(&repo.DbUser{})
-	userrepo := repo.NewUserRepositorySqlite(sqliterepo.GetDB())
-	ucase := use.NewUserUsecase(userrepo)
-	a := ent.User{
+	sqliterepo.Migrate(&user.DbUser{})
+	userrepo := user.NewUserRepositorySqlite(sqliterepo.GetDB())
+	ucase := user.NewUserUsecase(userrepo)
+	a := user.User{
 		ID:           uuid.New(),
 		Login:        null.StringFrom("ЛОГин"),
 		PasswordHash: null.StringFrom(""),

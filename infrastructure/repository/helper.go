@@ -4,7 +4,7 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
-func paginate(limit, offset int) func(db *gorm.DB) *gorm.DB {
+func Paginate(limit, offset int) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		switch {
 		case limit > 100:

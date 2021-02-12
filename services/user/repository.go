@@ -1,4 +1,4 @@
-package repository
+package user
 
 import (
 	"errors"
@@ -9,8 +9,8 @@ import (
 	"github.com/jinzhu/gorm"
 	"gopkg.in/guregu/null.v4"
 
-	ent "github.com/Nemo08/NCTW/entity"
 	log "github.com/Nemo08/NCTW/infrastructure/logger"
+	repo "github.com/Nemo08/NCTW/infrastructure/repository"
 )
 
 //DbUser стуктура для хранения User в базе
@@ -24,8 +24,8 @@ type DbUser struct {
 	Email        null.String
 }
 
-func db2user(i DbUser) ent.User {
-	return ent.User{
+func db2user(i DbUser) User {
+	return User{
 		ID:           i.ID,
 		Login:        i.Login,
 		PasswordHash: i.PasswordHash,
@@ -33,7 +33,7 @@ func db2user(i DbUser) ent.User {
 	}
 }
 
-func user2db(i ent.User) DbUser {
+func user2db(i User) DbUser {
 	return DbUser{
 		ID:           i.ID,
 		Login:        i.Login,
@@ -53,7 +53,7 @@ func NewUserRepositorySqlite(db *gorm.DB) *userRepositorySqlite {
 	}
 }
 
-func (urs *userRepositorySqlite) Store(user ent.User) (*ent.User, error) {
+func (urs *userRepositorySqlite) Store(user User) (*User, error) {
 	var d DbUser
 	d = user2db(user)
 	d.ID = uuid.New()
@@ -72,13 +72,13 @@ func (urs *userRepositorySqlite) Store(user ent.User) (*ent.User, error) {
 	return &u, nil
 }
 
-func (urs *userRepositorySqlite) GetUsers(limit, offset int) ([]*ent.User, int, error) {
-	var users []*ent.User
+func (urs *userRepositorySqlite) GetUsers(limit, offset int) ([]*User, int, error) {
+	var users []*User
 	var DbUsers []*DbUser
 	var count int
 
 	urs.db.Model(&DbUsers).Count(&count)
-	g := urs.db.Scopes(paginate(limit, offset)).Find(&DbUsers)
+	g := urs.db.Scopes(repo.Paginate(limit, offset)).Find(&DbUsers)
 
 	if g.Error != nil {
 		return users, count, g.Error
@@ -92,9 +92,9 @@ func (urs *userRepositorySqlite) GetUsers(limit, offset int) ([]*ent.User, int, 
 	return users, count, nil
 }
 
-func (urs *userRepositorySqlite) FindByID(id uuid.UUID) (*ent.User, error) {
+func (urs *userRepositorySqlite) FindByID(id uuid.UUID) (*User, error) {
 	var d DbUser
-	var u ent.User
+	var u User
 
 	g := urs.db.Where("id = ?", id).First(&d)
 	if g.Error != nil {
@@ -105,14 +105,14 @@ func (urs *userRepositorySqlite) FindByID(id uuid.UUID) (*ent.User, error) {
 	return &u, nil
 }
 
-func (urs *userRepositorySqlite) Find(q string, limit, offset int) ([]*ent.User, int, error) {
-	var users []*ent.User
+func (urs *userRepositorySqlite) Find(q string, limit, offset int) ([]*User, int, error) {
+	var users []*User
 	var DbUsers []*DbUser
 	var count int
 
 	//считаем количество результатов в запросе
 	urs.db.Where("utflower(login) LIKE ?", strings.ToLower("%"+q+"%")).Find(&DbUsers).Count(&count)
-	g := urs.db.Scopes(paginate(limit, offset)).Where(
+	g := urs.db.Scopes(repo.Paginate(limit, offset)).Where(
 		"(utflower(login) LIKE ?) OR (utflower(email) LIKE ?)",
 		strings.ToLower("%"+q+"%"), strings.ToLower("%"+q+"%")).Find(&DbUsers)
 	if g.Error != nil {
@@ -125,7 +125,7 @@ func (urs *userRepositorySqlite) Find(q string, limit, offset int) ([]*ent.User,
 	return users, count, nil
 }
 
-func (urs *userRepositorySqlite) UpdateUser(u ent.User) (*ent.User, error) {
+func (urs *userRepositorySqlite) UpdateUser(u User) (*User, error) {
 	d := user2db(u)
 	attrs := make(map[string]interface{})
 
@@ -134,7 +134,7 @@ func (urs *userRepositorySqlite) UpdateUser(u ent.User) (*ent.User, error) {
 	}
 
 	if !u.Password.IsZero() {
-		hash, err := ent.CreateHash(u.Password.String)
+		hash, err := CreateHash(u.Password.String)
 		if err != nil {
 			return &u, err
 		}
@@ -163,9 +163,9 @@ func (urs *userRepositorySqlite) DeleteUserByID(id uuid.UUID) error {
 	return nil
 }
 
-func (urs *userRepositorySqlite) CheckPassword(login string, password string) (*ent.User, error) {
+func (urs *userRepositorySqlite) CheckPassword(login string, password string) (*User, error) {
 	var d DbUser
-	var u ent.User
+	var u User
 
 	g := urs.db.Where("login = ? AND password = ?", login, password).Take(&d)
 	if g.Error != nil {

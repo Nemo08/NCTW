@@ -10,10 +10,9 @@ import (
 	cfg "github.com/Nemo08/NCTW/infrastructure/config"
 	db "github.com/Nemo08/NCTW/infrastructure/database"
 	log "github.com/Nemo08/NCTW/infrastructure/logger"
-	repo "github.com/Nemo08/NCTW/infrastructure/repository"
 	rout "github.com/Nemo08/NCTW/infrastructure/router"
 	vld "github.com/Nemo08/NCTW/infrastructure/validator"
-	use "github.com/Nemo08/NCTW/usecase"
+	user "github.com/Nemo08/NCTW/services/user"
 )
 
 func main() {
@@ -28,13 +27,13 @@ func main() {
 	defer database.Close()
 
 	//создаем репозитории объектов
-	userrepo := repo.NewUserRepositorySqlite(database.GetDB())
+	userrepo := user.NewUserRepositorySqlite(database.GetDB())
 
 	//Автомиграция таблиц
-	database.Migrate(&repo.DbUser{})
+	database.Migrate(&user.DbUser{})
 
 	//бизнес-логика
-	ucase := use.NewUserUsecase(userrepo)
+	ucase := user.NewUserUsecase(userrepo)
 
 	//роуты и сервер
 	e := echo.New()
@@ -46,7 +45,7 @@ func main() {
 	e.Use(middleware.RequestID())
 	apiV1Router := e.Group("/api/v1")
 
-	rout.NewUserHTTPRouter(ucase, apiV1Router)
+	user.NewUserHTTPRouter(ucase, apiV1Router)
 	rout.NewStaticHTTPRouter(e)
 
 	//запуск сервера
