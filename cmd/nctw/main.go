@@ -10,32 +10,30 @@ import (
 	cfg "github.com/Nemo08/NCTW/infrastructure/config"
 	db "github.com/Nemo08/NCTW/infrastructure/database"
 	log "github.com/Nemo08/NCTW/infrastructure/logger"
-	repo "github.com/Nemo08/NCTW/infrastructure/repository"
 	rout "github.com/Nemo08/NCTW/infrastructure/router"
-	use "github.com/Nemo08/NCTW/usecase"
+	vld "github.com/Nemo08/NCTW/infrastructure/validator"
+	user "github.com/Nemo08/NCTW/services/user"
 )
 
 func main() {
-	//логгер
-	logger := log.NewStdLogger()
-
 	//конфигуратор
-	conf := cfg.NewAppConfigLoader(logger)
+	conf := cfg.NewAppConfigLoader()
+
+	//валидатор
+	vld.NewValidator()
 
 	//база
-	sqliterepo := db.NewSqliteRepository(logger, conf)
-	defer sqliterepo.Close()
+	database := db.NewSqliteRepository(conf)
+	defer database.Close()
 
 	//создаем репозитории объектов
-	userrepo := repo.NewUserRepositorySqlite(logger, conf, sqliterepo.GetDB())
-	contrepo := repo.NewContactRepositorySqlite(logger, conf, sqliterepo.GetDB())
+	userrepo := user.NewUserRepositorySqlite(database.GetDB())
 
 	//Автомиграция таблиц
-	sqliterepo.Migrate(&repo.DbUser{}, &repo.DbContact{}, &repo.DbBranch{})
+	database.Migrate(&user.DbUser{})
 
 	//бизнес-логика
-	ucase := use.NewUserUsecase(logger, userrepo)
-	contcase := use.NewContactUsecase(logger, contrepo)
+	ucase := user.NewUserUsecase(userrepo)
 
 	//роуты и сервер
 	e := echo.New()
@@ -45,18 +43,18 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.RequestID())
+	e.Use(rout.CustomApiContext)
 	apiV1Router := e.Group("/api/v1")
 
-	rout.NewUserHTTPRouter(logger, ucase, apiV1Router)
-	rout.NewContactHTTPRouter(logger, contcase, apiV1Router)
-	rout.NewStaticHTTPRouter(logger, e)
+	user.NewUserHTTPRouter(ucase, apiV1Router)
+	rout.NewStaticHTTPRouter(e)
 
 	//запуск сервера
 	if !conf.IsSet("SERVEPORT") {
-		logger.LogError("Переменная окружения SERVEPORT для порта не установлена")
+		log.LogError("Переменная окружения SERVEPORT для порта не установлена")
 		os.Exit(1)
 	}
 	port := conf.Get("SERVEPORT")
-	logger.LogMessage("Сервер запущен на порту " + port)
+	log.LogMessage("Сервер запущен на порту " + port)
 	e.Logger.Fatal(e.Start(":" + port))
 }

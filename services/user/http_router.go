@@ -1,7 +1,6 @@
-package router
+package user
 
 import (
-	"errors"
 	"net/http"
 	"strconv"
 
@@ -9,11 +8,13 @@ import (
 	"github.com/labstack/echo/v4"
 	"gopkg.in/guregu/null.v4"
 
-	ent "github.com/Nemo08/NCTW/entity"
 	log "github.com/Nemo08/NCTW/infrastructure/logger"
-	use "github.com/Nemo08/NCTW/usecase"
+	"github.com/Nemo08/NCTW/infrastructure/router"
 )
 
+type CustomContext struct {
+	echo.Context
+}
 type jsonUser struct {
 	ID           uuid.UUID   `json:"id"`
 	Login        null.String `json:"login"`
@@ -23,8 +24,8 @@ type jsonUser struct {
 }
 
 //json2user Json объект копируем в Entity
-func json2user(i jsonUser) ent.User {
-	return ent.User{
+func json2user(i jsonUser) User {
+	return User{
 		ID:           i.ID,
 		Login:        i.Login,
 		PasswordHash: i.PasswordHash,
@@ -34,7 +35,7 @@ func json2user(i jsonUser) ent.User {
 }
 
 //user2json Entity объект копируем в Json
-func user2json(i ent.User) jsonUser {
+func user2json(i User) jsonUser {
 	return jsonUser{
 		ID:    i.ID,
 		Login: i.Login,
@@ -43,17 +44,15 @@ func user2json(i ent.User) jsonUser {
 }
 
 type userHTTPRouter struct {
-	uc  use.UserUsecase
-	log log.LogInterface
+	uc UserUsecase
 }
 
 //NewUserHTTPRouter роутер пользователей
-func NewUserHTTPRouter(l log.LogInterface, u use.UserUsecase, g *echo.Group) {
-	l.LogMessage("Создаю роутер для user")
+func NewUserHTTPRouter(u UserUsecase, g *echo.Group) {
+	log.LogMessage("Создаю роутер для user")
 
 	us := userHTTPRouter{
-		uc:  u,
-		log: l,
+		uc: u,
 	}
 
 	subr := g.Group("/user")
@@ -66,17 +65,12 @@ func NewUserHTTPRouter(l log.LogInterface, u use.UserUsecase, g *echo.Group) {
 }
 
 func (ush *userHTTPRouter) GetUsers(c echo.Context) (err error) {
-	ush.log.LogMessage("Запрошены пользователи постранично")
+	log.LogMessage("Запрошены пользователи постранично")
 
-	var u []*ent.User
+	var u []*User
 	var jsusers []*jsonUser
 
-	limit, offset, err := ush.findLimits(c)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "error:"+err.Error())
-	}
-
-	u, count, err := ush.uc.GetUsers(limit, offset)
+	u, count, err := ush.uc.GetUsers(c.(router.ApiContext))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "error:"+err.Error())
 	}
@@ -91,15 +85,15 @@ func (ush *userHTTPRouter) GetUsers(c echo.Context) (err error) {
 }
 
 func (ush *userHTTPRouter) GetUser(c echo.Context) (err error) {
-	ush.log.LogMessage("Http request to get one user with id ", c.Param("id"))
+	log.LogMessage("Http request to get one user with id ", c.Param("id"))
 
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Error while decoding request body:"+err.Error())
 	}
 
-	var u *ent.User
-	u, err = ush.uc.FindByID(id)
+	var u *User
+	u, err = ush.uc.FindByID(c.(router.ApiContext), id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "error:"+err.Error())
 	}
@@ -109,20 +103,15 @@ func (ush *userHTTPRouter) GetUser(c echo.Context) (err error) {
 }
 
 func (ush *userHTTPRouter) Find(c echo.Context) (err error) {
-	ush.log.LogMessage("Http request to find users with query ", c.Param("query"))
+	log.LogMessage("Http request to find users with query ", c.Param("query"))
 
 	q := c.Param("query")
 	if len(q) < 3 {
 		return echo.NewHTTPError(http.StatusBadRequest, "Too short query string")
 	}
 
-	limit, offset, err := ush.findLimits(c)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "error:"+err.Error())
-	}
-
-	var u []*ent.User
-	u, count, err := ush.uc.Find(q, limit, offset)
+	var u []*User
+	u, count, err := ush.uc.Find(c.(router.ApiContext), q)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "error:"+err.Error())
 	}
@@ -141,7 +130,7 @@ func (ush *userHTTPRouter) Find(c echo.Context) (err error) {
 }
 
 func (ush *userHTTPRouter) Store(c echo.Context) (err error) {
-	ush.log.LogMessage("Http request to make one user")
+	log.LogMessage("Http request to make one user")
 
 	j := &jsonUser{}
 
@@ -149,12 +138,12 @@ func (ush *userHTTPRouter) Store(c echo.Context) (err error) {
 		return echo.NewHTTPError(http.StatusBadRequest, "Error while decoding request body: "+err.Error())
 	}
 
-	u, err := ent.NewUser(j.Login, j.Password, j.Email)
+	u, err := NewUser(j.Login, j.Password, j.Email)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error while user store: "+err.Error())
 	}
 
-	u2, err := ush.uc.AddUser(u)
+	u2, err := ush.uc.AddUser(c.(router.ApiContext), u)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error while user store: "+err.Error())
 	}
@@ -164,14 +153,14 @@ func (ush *userHTTPRouter) Store(c echo.Context) (err error) {
 }
 
 func (ush *userHTTPRouter) Update(c echo.Context) (err error) {
-	ush.log.LogMessage("Http request to update one user")
+	log.LogMessage("Http request to update one user")
 
 	j := &jsonUser{}
 	if err = c.Bind(j); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Error while decoding request body: "+err.Error())
 	}
 
-	u, err := ush.uc.UpdateUser(json2user(*j))
+	u, err := ush.uc.UpdateUser(c.(router.ApiContext), json2user(*j))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error while user store: "+err.Error())
 	}
@@ -181,32 +170,17 @@ func (ush *userHTTPRouter) Update(c echo.Context) (err error) {
 }
 
 func (ush *userHTTPRouter) Delete(c echo.Context) (err error) {
-	ush.log.LogMessage("Http request to delete one user with id ", c.Param("id"))
+	log.LogMessage("Http request to delete one user with id ", c.Param("id"))
 
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Error while decoding request body:"+err.Error())
 	}
 
-	err = ush.uc.DeleteUserByID(id)
+	err = ush.uc.DeleteUserByID(c.(router.ApiContext), id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error while delete user:"+err.Error())
 	}
 
 	return c.JSON(http.StatusOK, id)
-}
-
-func (ush *userHTTPRouter) findLimits(c echo.Context) (l int, o int, e error) {
-	if (c.QueryParam("limit") == "") || (c.QueryParam("offset") == "") {
-		return 0, 0, errors.New("error: Not set limit or offset")
-	}
-	limit, err := strconv.Atoi(c.QueryParam("limit"))
-	if err != nil {
-		return 0, 0, err
-	}
-	offset, err := strconv.Atoi(c.QueryParam("offset"))
-	if err != nil {
-		return 0, 0, err
-	}
-	return limit, offset, nil
 }

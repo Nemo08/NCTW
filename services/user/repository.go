@@ -1,4 +1,4 @@
-package repository
+package user
 
 import (
 	"errors"
@@ -9,14 +9,14 @@ import (
 	"github.com/jinzhu/gorm"
 	"gopkg.in/guregu/null.v4"
 
-	ent "github.com/Nemo08/NCTW/entity"
-	cfg "github.com/Nemo08/NCTW/infrastructure/config"
 	log "github.com/Nemo08/NCTW/infrastructure/logger"
+	repo "github.com/Nemo08/NCTW/infrastructure/repository"
+	"github.com/Nemo08/NCTW/infrastructure/router"
 )
 
 //DbUser стуктура для хранения User в базе
 type DbUser struct {
-	ID           uuid.UUID   `gorm:"type:uuid;primary_key;"`
+	ID           uuid.UUID   `gorm:"type:uuid;primaryKey;PrioritizedPrimaryField"`
 	CreatedAt    time.Time   `gorm:"default:CURRENT_TIMESTAMP"`
 	UpdatedAt    time.Time   `gorm:"default:CURRENT_TIMESTAMP"`
 	DeletedAt    *time.Time  `sql:"index"`
@@ -25,8 +25,8 @@ type DbUser struct {
 	Email        null.String
 }
 
-func db2user(i DbUser) ent.User {
-	return ent.User{
+func db2user(i DbUser) User {
+	return User{
 		ID:           i.ID,
 		Login:        i.Login,
 		PasswordHash: i.PasswordHash,
@@ -34,7 +34,7 @@ func db2user(i DbUser) ent.User {
 	}
 }
 
-func user2db(i ent.User) DbUser {
+func user2db(i User) DbUser {
 	return DbUser{
 		ID:           i.ID,
 		Login:        i.Login,
@@ -44,21 +44,18 @@ func user2db(i ent.User) DbUser {
 }
 
 type userRepositorySqlite struct {
-	db  *gorm.DB
-	log log.LogInterface
+	db *gorm.DB
 }
 
 //NewUserRepositorySqlite создание объекта репозитория для User
-func NewUserRepositorySqlite(l log.LogInterface, c cfg.ConfigInterface, db *gorm.DB) *userRepositorySqlite {
+func NewUserRepositorySqlite(db *gorm.DB) *userRepositorySqlite {
 	return &userRepositorySqlite{
-		db:  db,
-		log: l,
+		db: db,
 	}
 }
 
-func (urs *userRepositorySqlite) Store(user ent.User) (*ent.User, error) {
-	var d DbUser
-	d = user2db(user)
+func (urs *userRepositorySqlite) Store(ctx router.ApiContext, user User) (*User, error) {
+	var d DbUser = user2db(user)
 	d.ID = uuid.New()
 
 	errSlice := urs.db.Create(&d).GetErrors()
@@ -66,7 +63,7 @@ func (urs *userRepositorySqlite) Store(user ent.User) (*ent.User, error) {
 	if len(errSlice) != 0 {
 
 		for _, err := range errSlice {
-			urs.log.LogError("Error while user create", err)
+			log.LogError("Error while user create", err)
 			estr = estr + err.Error()
 		}
 		return &user, errors.New("Error while user create:" + estr)
@@ -75,13 +72,13 @@ func (urs *userRepositorySqlite) Store(user ent.User) (*ent.User, error) {
 	return &u, nil
 }
 
-func (urs *userRepositorySqlite) GetUsers(limit, offset int) ([]*ent.User, int, error) {
-	var users []*ent.User
+func (urs *userRepositorySqlite) GetUsers(ctx router.ApiContext) ([]*User, int, error) {
+	var users []*User
 	var DbUsers []*DbUser
 	var count int
 
 	urs.db.Model(&DbUsers).Count(&count)
-	g := urs.db.Scopes(paginate(limit, offset)).Find(&DbUsers)
+	g := urs.db.Scopes(repo.Paginate(ctx)).Find(&DbUsers)
 
 	if g.Error != nil {
 		return users, count, g.Error
@@ -95,9 +92,9 @@ func (urs *userRepositorySqlite) GetUsers(limit, offset int) ([]*ent.User, int, 
 	return users, count, nil
 }
 
-func (urs *userRepositorySqlite) FindByID(id uuid.UUID) (*ent.User, error) {
+func (urs *userRepositorySqlite) FindByID(ctx router.ApiContext, id uuid.UUID) (*User, error) {
 	var d DbUser
-	var u ent.User
+	var u User
 
 	g := urs.db.Where("id = ?", id).First(&d)
 	if g.Error != nil {
@@ -108,14 +105,14 @@ func (urs *userRepositorySqlite) FindByID(id uuid.UUID) (*ent.User, error) {
 	return &u, nil
 }
 
-func (urs *userRepositorySqlite) Find(q string, limit, offset int) ([]*ent.User, int, error) {
-	var users []*ent.User
+func (urs *userRepositorySqlite) Find(ctx router.ApiContext, q string) ([]*User, int, error) {
+	var users []*User
 	var DbUsers []*DbUser
 	var count int
 
 	//считаем количество результатов в запросе
 	urs.db.Where("utflower(login) LIKE ?", strings.ToLower("%"+q+"%")).Find(&DbUsers).Count(&count)
-	g := urs.db.Scopes(paginate(limit, offset)).Where(
+	g := urs.db.Scopes(repo.Paginate(ctx)).Where(
 		"(utflower(login) LIKE ?) OR (utflower(email) LIKE ?)",
 		strings.ToLower("%"+q+"%"), strings.ToLower("%"+q+"%")).Find(&DbUsers)
 	if g.Error != nil {
@@ -128,7 +125,7 @@ func (urs *userRepositorySqlite) Find(q string, limit, offset int) ([]*ent.User,
 	return users, count, nil
 }
 
-func (urs *userRepositorySqlite) UpdateUser(u ent.User) (*ent.User, error) {
+func (urs *userRepositorySqlite) UpdateUser(ctx router.ApiContext, u User) (*User, error) {
 	d := user2db(u)
 	attrs := make(map[string]interface{})
 
@@ -137,7 +134,7 @@ func (urs *userRepositorySqlite) UpdateUser(u ent.User) (*ent.User, error) {
 	}
 
 	if !u.Password.IsZero() {
-		hash, err := ent.CreateHash(u.Password.String)
+		hash, err := CreateHash(u.Password.String)
 		if err != nil {
 			return &u, err
 		}
@@ -150,7 +147,7 @@ func (urs *userRepositorySqlite) UpdateUser(u ent.User) (*ent.User, error) {
 		return &u, g.Error
 	}
 
-	updatedUser, err := urs.FindByID(d.ID)
+	updatedUser, err := urs.FindByID(ctx, d.ID)
 	if err != nil {
 		return &u, err
 	}
@@ -158,7 +155,7 @@ func (urs *userRepositorySqlite) UpdateUser(u ent.User) (*ent.User, error) {
 	return updatedUser, nil
 }
 
-func (urs *userRepositorySqlite) DeleteUserByID(id uuid.UUID) error {
+func (urs *userRepositorySqlite) DeleteUserByID(ctx router.ApiContext, id uuid.UUID) error {
 	g := urs.db.Where("id = ?", id).Delete(&DbUser{})
 	if g.Error != nil {
 		return g.Error
@@ -166,9 +163,9 @@ func (urs *userRepositorySqlite) DeleteUserByID(id uuid.UUID) error {
 	return nil
 }
 
-func (urs *userRepositorySqlite) CheckPassword(login string, password string) (*ent.User, error) {
+func (urs *userRepositorySqlite) CheckPassword(login string, password string) (*User, error) {
 	var d DbUser
-	var u ent.User
+	var u User
 
 	g := urs.db.Where("login = ? AND password = ?", login, password).Take(&d)
 	if g.Error != nil {

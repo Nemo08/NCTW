@@ -7,29 +7,30 @@ import (
 	"gopkg.in/guregu/null.v4"
 
 	cfg "github.com/Nemo08/NCTW/infrastructure/config"
-	log "github.com/Nemo08/NCTW/infrastructure/logger"
+	"github.com/Nemo08/NCTW/infrastructure/router"
 
-	ent "github.com/Nemo08/NCTW/entity"
-	repo "github.com/Nemo08/NCTW/infrastructure/repository"
-	use "github.com/Nemo08/NCTW/usecase"
+	user "github.com/Nemo08/NCTW/services/user"
 )
 
 func TestNewSqliteRepository(t *testing.T) {
-	logger := log.NewStdLogger()
-	conf := cfg.NewCustomAppConfigLoader(logger)
-	sqliterepo := NewSqliteRepository(logger, conf)
+	conf := cfg.NewCustomAppConfigLoader()
+	sqliterepo := NewSqliteRepository(conf)
 	defer sqliterepo.Close()
 
-	sqliterepo.Migrate(&repo.DbUser{}, &repo.DbContact{}, &repo.DbBranch{})
-	userrepo := repo.NewUserRepositorySqlite(logger, conf, sqliterepo.GetDB())
-	ucase := use.NewUserUsecase(logger, userrepo)
-	a := ent.User{
+	sqliterepo.Migrate(&user.DbUser{})
+	userrepo := user.NewUserRepositorySqlite(sqliterepo.GetDB())
+	ucase := user.NewUserUsecase(userrepo)
+	a := user.User{
 		ID:           uuid.New(),
 		Login:        null.StringFrom("ЛОГин"),
 		PasswordHash: null.StringFrom(""),
 	}
-	d, err := ucase.AddUser(a)
-	u, _, err := ucase.Find("логин", 5, 0)
+	d, err := ucase.AddUser(router.ApiContext{}, a)
+	if err != nil {
+		t.Error("Ошибка в добавлении пользователя ", err.Error())
+	}
+
+	u, _, err := ucase.Find(router.ApiContext{}, "логин")
 	if err != nil {
 		t.Error("Ошибка в поиске пользователя ", err.Error())
 	}
