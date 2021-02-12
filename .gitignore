@@ -5,3 +5,6 @@
 app/nctw/cover.out
 static/*
 .vscode/launch.json
+app/nctw/__debug_bin
+cmd/nctw/__debug_bin
+cmd/nctw/__debug_bin
