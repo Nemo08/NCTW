@@ -9,7 +9,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"gopkg.in/guregu/null.v4"
 
-	log "github.com/Nemo08/NCTW/infrastructure/logger"
+	"github.com/Nemo08/NCTW/infrastructure/logger"
 	repo "github.com/Nemo08/NCTW/infrastructure/repository"
 	"github.com/Nemo08/NCTW/services/api"
 )
@@ -43,18 +43,18 @@ func user2db(i User) DbUser {
 	}
 }
 
-type userRepositorySqlite struct {
+type RepositorySqlite struct {
 	db *gorm.DB
 }
 
-//NewUserRepositorySqlite создание объекта репозитория для User
-func NewUserRepositorySqlite(db *gorm.DB) *userRepositorySqlite {
-	return &userRepositorySqlite{
+//NewRepositorySqlite создание объекта репозитория для User
+func NewRepositorySqlite(db *gorm.DB) *RepositorySqlite {
+	return &RepositorySqlite{
 		db: db,
 	}
 }
 
-func (urs *userRepositorySqlite) Store(ctx api.Context, user User) (*User, error) {
+func (urs *RepositorySqlite) Store(ctx api.Context, user User) (*User, error) {
 	var d DbUser = user2db(user)
 	d.ID = uuid.New()
 
@@ -63,7 +63,7 @@ func (urs *userRepositorySqlite) Store(ctx api.Context, user User) (*User, error
 	if len(errSlice) != 0 {
 
 		for _, err := range errSlice {
-			log.LogError("Error while user create", err)
+			logger.Log.LogError("Error while user create", err)
 			estr = estr + err.Error()
 		}
 		return &user, errors.New("Error while user create:" + estr)
@@ -72,7 +72,7 @@ func (urs *userRepositorySqlite) Store(ctx api.Context, user User) (*User, error
 	return &u, nil
 }
 
-func (urs *userRepositorySqlite) GetUsers(ctx api.Context) ([]*User, int, error) {
+func (urs *RepositorySqlite) Get(ctx api.Context) ([]*User, int, error) {
 	var users []*User
 	var DbUsers []*DbUser
 	var count int
@@ -92,7 +92,7 @@ func (urs *userRepositorySqlite) GetUsers(ctx api.Context) ([]*User, int, error)
 	return users, count, nil
 }
 
-func (urs *userRepositorySqlite) FindByID(ctx api.Context, id uuid.UUID) (*User, error) {
+func (urs *RepositorySqlite) FindByID(ctx api.Context, id uuid.UUID) (*User, error) {
 	var d DbUser
 	var u User
 
@@ -105,7 +105,7 @@ func (urs *userRepositorySqlite) FindByID(ctx api.Context, id uuid.UUID) (*User,
 	return &u, nil
 }
 
-func (urs *userRepositorySqlite) Find(ctx api.Context, q string) ([]*User, int, error) {
+func (urs *RepositorySqlite) Find(ctx api.Context, q string) ([]*User, int, error) {
 	var users []*User
 	var DbUsers []*DbUser
 	var count int
@@ -125,7 +125,7 @@ func (urs *userRepositorySqlite) Find(ctx api.Context, q string) ([]*User, int, 
 	return users, count, nil
 }
 
-func (urs *userRepositorySqlite) UpdateUser(ctx api.Context, u User) (*User, error) {
+func (urs *RepositorySqlite) Update(ctx api.Context, u User) (*User, error) {
 	d := user2db(u)
 	attrs := make(map[string]interface{})
 
@@ -155,7 +155,7 @@ func (urs *userRepositorySqlite) UpdateUser(ctx api.Context, u User) (*User, err
 	return updatedUser, nil
 }
 
-func (urs *userRepositorySqlite) DeleteUserByID(ctx api.Context, id uuid.UUID) error {
+func (urs *RepositorySqlite) DeleteByID(ctx api.Context, id uuid.UUID) error {
 	g := urs.db.Where("id = ?", id).Delete(&DbUser{})
 	if g.Error != nil {
 		return g.Error
@@ -163,7 +163,7 @@ func (urs *userRepositorySqlite) DeleteUserByID(ctx api.Context, id uuid.UUID) e
 	return nil
 }
 
-func (urs *userRepositorySqlite) CheckPassword(login string, password string) (*User, error) {
+func (urs *RepositorySqlite) CheckPassword(login string, password string) (*User, error) {
 	var d DbUser
 	var u User
 

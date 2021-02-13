@@ -17,6 +17,9 @@ import (
 )
 
 func main() {
+	//логгер
+	log := log.Logger{}
+
 	//конфигуратор
 	conf := cfg.NewAppConfigLoader()
 
@@ -28,13 +31,13 @@ func main() {
 	defer database.Close()
 
 	//создаем репозитории объектов
-	userrepo := user.NewUserRepositorySqlite(database.GetDB())
+	userrepo := user.NewRepositorySqlite(database.GetDB())
 
 	//Автомиграция таблиц
 	database.Migrate(&user.DbUser{})
 
 	//бизнес-логика
-	ucase := user.NewUserUsecase(userrepo)
+	ucase := user.NewUsecase(userrepo)
 
 	//роуты и сервер
 	e := echo.New()

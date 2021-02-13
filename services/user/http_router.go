@@ -1,6 +1,7 @@
 package user
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 
@@ -8,12 +9,13 @@ import (
 	"github.com/labstack/echo/v4"
 	"gopkg.in/guregu/null.v4"
 
-	log "github.com/Nemo08/NCTW/infrastructure/logger"
+	"github.com/Nemo08/NCTW/infrastructure/logger"
 	"github.com/Nemo08/NCTW/services/api"
 )
 
 type CustomContext struct {
 	echo.Context
+	log log.Logger
 }
 type jsonUser struct {
 	ID           uuid.UUID   `json:"id"`
@@ -44,12 +46,12 @@ func user2json(i User) jsonUser {
 }
 
 type userHTTPRouter struct {
-	uc UserUsecase
+	uc Usecase
 }
 
 //NewUserHTTPRouter роутер пользователей
-func NewUserHTTPRouter(u UserUsecase, g *echo.Group) {
-	log.LogMessage("Создаю роутер для user")
+func NewUserHTTPRouter(u Usecase, g *echo.Group) {
+	logger.Log.LogMessage("Создаю роутер для user")
 
 	us := userHTTPRouter{
 		uc: u,
@@ -65,12 +67,12 @@ func NewUserHTTPRouter(u UserUsecase, g *echo.Group) {
 }
 
 func (ush *userHTTPRouter) GetUsers(c echo.Context) (err error) {
-	log.LogMessage("Запрошены пользователи постранично")
+	logger.Log.LogMessage("Запрошены пользователи постранично")
 
 	var u []*User
 	var jsusers []*jsonUser
 
-	u, count, err := ush.uc.GetUsers(c.(api.Context))
+	u, count, err := ush.uc.Get(c.(api.Context))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "error:"+err.Error())
 	}
@@ -85,7 +87,7 @@ func (ush *userHTTPRouter) GetUsers(c echo.Context) (err error) {
 }
 
 func (ush *userHTTPRouter) GetUser(c echo.Context) (err error) {
-	log.LogMessage("Http request to get one user with id ", c.Param("id"))
+	logger.Log.LogMessage("Http request to get one user with id ", c.Param("id"))
 
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -103,7 +105,7 @@ func (ush *userHTTPRouter) GetUser(c echo.Context) (err error) {
 }
 
 func (ush *userHTTPRouter) Find(c echo.Context) (err error) {
-	log.LogMessage("Http request to find users with query ", c.Param("query"))
+	logger.Log.LogMessage("Http request to find users with query ", c.Param("query"))
 
 	q := c.Param("query")
 	if len(q) < 3 {
@@ -130,7 +132,7 @@ func (ush *userHTTPRouter) Find(c echo.Context) (err error) {
 }
 
 func (ush *userHTTPRouter) Store(c echo.Context) (err error) {
-	log.LogMessage("Http request to make one user")
+	logger.Log.LogMessage("Http request to make one user")
 
 	j := &jsonUser{}
 
@@ -143,7 +145,7 @@ func (ush *userHTTPRouter) Store(c echo.Context) (err error) {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error while user store: "+err.Error())
 	}
 
-	u2, err := ush.uc.AddUser(c.(api.Context), u)
+	u2, err := ush.uc.Add(c.(api.Context), u)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error while user store: "+err.Error())
 	}
@@ -153,14 +155,14 @@ func (ush *userHTTPRouter) Store(c echo.Context) (err error) {
 }
 
 func (ush *userHTTPRouter) Update(c echo.Context) (err error) {
-	log.LogMessage("Http request to update one user")
+	logger.Log.LogMessage("Http request to update one user")
 
 	j := &jsonUser{}
 	if err = c.Bind(j); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Error while decoding request body: "+err.Error())
 	}
 
-	u, err := ush.uc.UpdateUser(c.(api.Context), json2user(*j))
+	u, err := ush.uc.Update(c.(api.Context), json2user(*j))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error while user store: "+err.Error())
 	}
@@ -170,14 +172,14 @@ func (ush *userHTTPRouter) Update(c echo.Context) (err error) {
 }
 
 func (ush *userHTTPRouter) Delete(c echo.Context) (err error) {
-	log.LogMessage("Http request to delete one user with id ", c.Param("id"))
+	logger.Log.LogMessage("Http request to delete one user with id ", c.Param("id"))
 
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Error while decoding request body:"+err.Error())
 	}
 
-	err = ush.uc.DeleteUserByID(c.(api.Context), id)
+	err = ush.uc.DeleteByID(c.(api.Context), id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error while delete user:"+err.Error())
 	}

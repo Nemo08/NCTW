@@ -11,14 +11,14 @@ import (
 )
 
 //FillDatbaseByUsers заполняет базу фейковыми данными
-func FillDatbaseByUsers(uc *user.UserUsecaseStruct, c int) {
+func FillDatbaseByUsers(uc *user.UsecaseStruct, c int) {
 	for i := 0; i < c; i++ {
 		prof := randomdata.GenerateProfile(1)
 		newuser, _ := user.NewUser(
 			null.NewString(prof.Name.First+prof.Name.Last+randomdata.Digits(3), true),
 			null.NewString(prof.Login.Password, true),
 			null.NewString(prof.Email+randomdata.Digits(3), true))
-		uc.AddUser(api.Context{}, newuser)
+		uc.Add(api.Context{}, newuser)
 	}
 }
 
@@ -31,14 +31,14 @@ func main() {
 	defer sqliterepo.Close()
 
 	//создаем репозитории объектов
-	userrepo := user.NewUserRepositorySqlite(sqliterepo.GetDB())
+	userrepo := user.NewRepositorySqlite(sqliterepo.GetDB())
 	//contrepo := repo.NewContactRepositorySqlite(logger, conf, sqliterepo.GetDB())
 
 	//Автомиграция таблиц
 	sqliterepo.Migrate(&user.DbUser{})
 
 	//бизнес-логика
-	ucase := user.NewUserUsecase(userrepo)
+	ucase := user.NewUsecase(userrepo)
 	//contcase := user.NewContactUsecase(logger, contrepo)
 	FillDatbaseByUsers(ucase, 100)
 }

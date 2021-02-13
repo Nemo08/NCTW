@@ -17,14 +17,14 @@ func TestNewSqliteRepository(t *testing.T) {
 	defer sqliterepo.Close()
 
 	sqliterepo.Migrate(&user.DbUser{})
-	userrepo := user.NewUserRepositorySqlite(sqliterepo.GetDB())
-	ucase := user.NewUserUsecase(userrepo)
+	userrepo := user.NewRepositorySqlite(sqliterepo.GetDB())
+	ucase := user.NewUsecase(userrepo)
 	a := user.User{
 		ID:           uuid.New(),
 		Login:        null.StringFrom("ЛОГин"),
 		PasswordHash: null.StringFrom(""),
 	}
-	d, err := ucase.AddUser(api.Context{}, a)
+	d, err := ucase.Add(api.Context{}, a)
 	if err != nil {
 		t.Error("Ошибка в добавлении пользователя ", err.Error())
 	}

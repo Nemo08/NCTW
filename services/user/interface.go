@@ -7,12 +7,12 @@ import (
 )
 
 //UserRepository объект репозитория User
-type UserRepository interface {
+type Repository interface {
 	Store(ctx api.Context, User User) (*User, error)
-	GetUsers(ctx api.Context) ([]*User, int, error)
+	Get(ctx api.Context) ([]*User, int, error)
 	FindByID(ctx api.Context, id uuid.UUID) (*User, error)
 	Find(ctx api.Context, q string) ([]*User, int, error)
-	UpdateUser(ctx api.Context, User User) (*User, error)
-	DeleteUserByID(ctx api.Context, id uuid.UUID) error
+	Update(ctx api.Context, User User) (*User, error)
+	DeleteByID(ctx api.Context, id uuid.UUID) error
 	CheckPassword(login string, password string) (*User, error)
 }

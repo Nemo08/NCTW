@@ -1,22 +1,28 @@
 package logger
 
 import (
-	log "github.com/sirupsen/logrus"
+	logrus "github.com/sirupsen/logrus"
 )
 
-func LogMessage(v ...interface{}) {
-	log.Infoln(v)
+var Log Logger
+
+type Logger struct {
+	l logrus.Logger
 }
 
-func LogError(v ...interface{}) {
-	log.Errorln(v)
+func (lg *Logger) LogMessage(v ...interface{}) {
+	lg.l.Infoln(v)
 }
 
-func Print(v ...interface{}) {
-	log.Infoln(v)
+func (lg *Logger) LogError(v ...interface{}) {
+	lg.l.Errorln(v)
+}
+
+func (lg *Logger) Print(v ...interface{}) {
+	lg.l.Infoln(v)
 }
 
 func Write(b []byte) (int, error) {
-	log.Infoln("[Сервер статики: ", string(b), "]")
+	Log.Print("[Сервер статики: ", string(b), "]")
 	return len(b), nil
 }

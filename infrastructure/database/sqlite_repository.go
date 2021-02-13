@@ -9,7 +9,7 @@ import (
 	"github.com/mattn/go-sqlite3"
 
 	cfg "github.com/Nemo08/NCTW/infrastructure/config"
-	log "github.com/Nemo08/NCTW/infrastructure/logger"
+	"github.com/Nemo08/NCTW/infrastructure/logger"
 )
 
 type sqliteRepository struct {
@@ -24,7 +24,7 @@ func utflower(s string) string {
 //NewSqliteRepository новый объект репозитория sqlite
 func NewSqliteRepository(c cfg.ConfigInterface) *sqliteRepository {
 	if !c.IsSet("DBTYPE") || !c.IsSet("DBCONNECTIONSTRING") {
-		log.LogError("Не установлены переменные окружения: DBTYPE или DBCONNECTIONSTRING")
+		logger.Log.LogError("Не установлены переменные окружения: DBTYPE или DBCONNECTIONSTRING")
 		os.Exit(1)
 	}
 
@@ -48,7 +48,7 @@ func NewSqliteRepository(c cfg.ConfigInterface) *sqliteRepository {
 	db, err := gorm.Open(dbtype, c.Get("DBCONNECTIONSTRING"))
 
 	if err != nil {
-		log.LogError(err)
+		logger.Log.LogError(err)
 		os.Exit(1)
 	}
 
