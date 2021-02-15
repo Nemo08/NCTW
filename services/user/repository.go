@@ -48,7 +48,7 @@ type RepositorySqlite struct {
 }
 
 //NewRepositorySqlite создание объекта репозитория для User
-func NewRepositorySqlite(db *gorm.DB) *RepositorySqlite {
+func NewSqliteRepository(db *gorm.DB) *RepositorySqlite {
 	return &RepositorySqlite{
 		db: db,
 	}

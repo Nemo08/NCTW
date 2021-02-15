@@ -22,7 +22,7 @@ func utflower(s string) string {
 }
 
 //NewSqliteRepository новый объект репозитория sqlite
-func NewSqliteRepository(c cfg.ConfigInterface) *sqliteRepository {
+func NewSqliteRepository(c cfg.ConfigInterface, log logger.LogInterface) *sqliteRepository {
 	if !c.IsSet("DBTYPE") || !c.IsSet("DBCONNECTIONSTRING") {
 		logger.Log.LogError("Не установлены переменные окружения: DBTYPE или DBCONNECTIONSTRING")
 		os.Exit(1)
@@ -48,7 +48,7 @@ func NewSqliteRepository(c cfg.ConfigInterface) *sqliteRepository {
 	db, err := gorm.Open(dbtype, c.Get("DBCONNECTIONSTRING"))
 
 	if err != nil {
-		logger.Log.LogError(err)
+		log.Error(err)
 		os.Exit(1)
 	}
 

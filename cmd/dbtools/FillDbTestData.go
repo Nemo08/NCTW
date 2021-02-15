@@ -2,12 +2,13 @@ package main
 
 import (
 	"github.com/Pallinder/go-randomdata"
+	"github.com/asim/go-micro/v3/logger"
 	"gopkg.in/guregu/null.v4"
 
 	cfg "github.com/Nemo08/NCTW/infrastructure/config"
 	db "github.com/Nemo08/NCTW/infrastructure/database"
-	user "github.com/Nemo08/NCTW/services/user"
 	api "github.com/Nemo08/NCTW/services/api"
+	user "github.com/Nemo08/NCTW/services/user"
 )
 
 //FillDatbaseByUsers заполняет базу фейковыми данными
@@ -23,15 +24,18 @@ func FillDatbaseByUsers(uc *user.UsecaseStruct, c int) {
 }
 
 func main() {
+	//логгер
+	log := logger.NewLogger()
+
 	//конфигуратор
 	conf := cfg.NewAppConfigLoader()
 
 	//база
-	sqliterepo := db.NewSqliteRepository(conf)
+	sqliterepo := db.NewSqliteRepository(conf, log)
 	defer sqliterepo.Close()
 
 	//создаем репозитории объектов
-	userrepo := user.NewRepositorySqlite(sqliterepo.GetDB())
+	userrepo := user.NewSqliteRepository(sqliterepo.GetDB())
 	//contrepo := repo.NewContactRepositorySqlite(logger, conf, sqliterepo.GetDB())
 
 	//Автомиграция таблиц

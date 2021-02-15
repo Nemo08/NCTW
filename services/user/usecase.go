@@ -23,7 +23,7 @@ type UsecaseStruct struct {
 }
 
 //NewUserUsecase создание объекта usecase для User
-func NewUsecase(r Repository) *UsecaseStruct {
+func NewUsecase(log logger.LogInterface, r Repository) *UsecaseStruct {
 	return &UsecaseStruct{
 		repo: r,
 	}
