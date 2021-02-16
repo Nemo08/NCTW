@@ -21,8 +21,8 @@ func TestNewSqliteRepository(t *testing.T) {
 	defer sqliterepo.Close()
 
 	sqliterepo.Migrate(&user.DbUser{})
-	userrepo := user.NewSqliteRepository(*log, sqliterepo.GetDB())
-	ucase := user.NewUsecase(*log, userrepo)
+	userrepo := user.NewSqliteRepository(sqliterepo.GetDB())
+	ucase := user.NewUsecase(userrepo)
 	a := user.User{
 		ID:           uuid.New(),
 		Login:        null.StringFrom("ЛОГин"),

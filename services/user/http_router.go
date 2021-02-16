@@ -1,7 +1,6 @@
 package user
 
 import (
-	"log"
 	"net/http"
 	"strconv"
 
@@ -13,10 +12,6 @@ import (
 	"github.com/Nemo08/NCTW/services/api"
 )
 
-type CustomContext struct {
-	echo.Context
-	log log.Logger
-}
 type jsonUser struct {
 	ID           uuid.UUID   `json:"id"`
 	Login        null.String `json:"login"`
@@ -55,8 +50,7 @@ func NewUserHTTPRouter(log logger.Logr, u Usecase, g *echo.Group) {
 	log.Info("Создаю роутер для user")
 
 	us := userHTTPRouter{
-		uc:  u,
-		log: log,
+		uc: u,
 	}
 
 	subr := g.Group("/user")
@@ -69,7 +63,8 @@ func NewUserHTTPRouter(log logger.Logr, u Usecase, g *echo.Group) {
 }
 
 func (ush *userHTTPRouter) GetUsers(c echo.Context) (err error) {
-	ush.log.WithContext(c.(api.Context)).Info("Запрошены пользователи постранично")
+	c.(api.Context).Log.Info("Запрошены пользователи постранично")
+
 	var u []*User
 	var jsusers []*jsonUser
 
@@ -88,7 +83,7 @@ func (ush *userHTTPRouter) GetUsers(c echo.Context) (err error) {
 }
 
 func (ush *userHTTPRouter) GetUser(c echo.Context) (err error) {
-	ush.log.WithContext(c.(api.Context)).Info("Http request to get one user with id ", c.Param("id"))
+	c.(api.Context).Log.Info("Http request to get one user with id ", c.Param("id"))
 
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -106,7 +101,7 @@ func (ush *userHTTPRouter) GetUser(c echo.Context) (err error) {
 }
 
 func (ush *userHTTPRouter) Find(c echo.Context) (err error) {
-	ush.log.WithContext(c.(api.Context)).Info("Http request to find users with query ", c.Param("query"))
+	c.(api.Context).Log.Info("Http request to find users with query ", c.Param("query"))
 
 	q := c.Param("query")
 	if len(q) < 3 {
@@ -133,7 +128,7 @@ func (ush *userHTTPRouter) Find(c echo.Context) (err error) {
 }
 
 func (ush *userHTTPRouter) Store(c echo.Context) (err error) {
-	ush.log.WithContext(c.(api.Context)).Info("Запрос на сохранение одного пользователя")
+	c.(api.Context).Log.Info("Запрос на сохранение одного пользователя")
 
 	j := &jsonUser{}
 
@@ -156,7 +151,7 @@ func (ush *userHTTPRouter) Store(c echo.Context) (err error) {
 }
 
 func (ush *userHTTPRouter) Update(c echo.Context) (err error) {
-	ush.log.WithContext(c.(api.Context)).Info("Запрос на апдейт одного пользователя")
+	c.(api.Context).Log.Info("Запрос на апдейт одного пользователя")
 
 	j := &jsonUser{}
 	if err = c.Bind(j); err != nil {
@@ -173,7 +168,7 @@ func (ush *userHTTPRouter) Update(c echo.Context) (err error) {
 }
 
 func (ush *userHTTPRouter) Delete(c echo.Context) (err error) {
-	ush.log.WithContext(c.(api.Context)).Info("Http request to delete one user with id ", c.Param("id"))
+	c.(api.Context).Log.Info("Http request to delete one user with id ", c.Param("id"))
 
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {

@@ -35,14 +35,14 @@ func main() {
 	defer sqliterepo.Close()
 
 	//создаем репозитории объектов
-	userrepo := user.NewSqliteRepository(*log, sqliterepo.GetDB())
+	userrepo := user.NewSqliteRepository(sqliterepo.GetDB())
 	//contrepo := repo.NewContactRepositorySqlite(logger, conf, sqliterepo.GetDB())
 
 	//Автомиграция таблиц
 	sqliterepo.Migrate(&user.DbUser{})
 
 	//бизнес-логика
-	ucase := user.NewUsecase(*log, userrepo)
+	ucase := user.NewUsecase(userrepo)
 	//contcase := user.NewContactUsecase(logger, contrepo)
 	FillDatbaseByUsers(ucase, 100)
 }

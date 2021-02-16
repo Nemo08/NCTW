@@ -37,23 +37,23 @@ func main() {
 	defer database.Close()
 
 	//создаем репозитории объектов
-	userrepo := user.NewSqliteRepository(*log, database.GetDB())
+	userrepo := user.NewSqliteRepository(database.GetDB())
 
 	//Автомиграция таблиц
 	database.Migrate(&user.DbUser{})
 
 	//бизнес-логика
-	ucase := user.NewUsecase(*log, userrepo)
+	ucase := user.NewUsecase(userrepo)
 
 	//роуты и сервер
 	e := echo.New()
 	e.HideBanner = true
-	e.Use(log.EchoLogger())
-	e.Use(api.CustomContext)
 	e.Pre(middleware.RemoveTrailingSlash())
 	e.Use(middleware.RequestID())
 	e.Use(middleware.Recover())
 	e.Use(middleware.RequestID())
+	e.Use(log.EchoLogger())
+	e.Use(api.CustomContext)
 	apiV1Router := e.Group("/api/v1")
 
 	user.NewUserHTTPRouter(*log, ucase, apiV1Router)
