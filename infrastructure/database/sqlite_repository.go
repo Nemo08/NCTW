@@ -22,9 +22,9 @@ func utflower(s string) string {
 }
 
 //NewSqliteRepository новый объект репозитория sqlite
-func NewSqliteRepository(c cfg.ConfigInterface, log logger.LogInterface) *sqliteRepository {
+func NewSqliteRepository(c cfg.ConfigInterface, log logger.Logr) *sqliteRepository {
 	if !c.IsSet("DBTYPE") || !c.IsSet("DBCONNECTIONSTRING") {
-		logger.Log.LogError("Не установлены переменные окружения: DBTYPE или DBCONNECTIONSTRING")
+		log.Error("Не установлены переменные окружения: DBTYPE или DBCONNECTIONSTRING")
 		os.Exit(1)
 	}
 
@@ -52,7 +52,8 @@ func NewSqliteRepository(c cfg.ConfigInterface, log logger.LogInterface) *sqlite
 		os.Exit(1)
 	}
 
-	//db.LogMode(true)
+	db.LogMode(true)
+	db.SetLogger(log.GormLogger())
 	return &sqliteRepository{db: db}
 }
 

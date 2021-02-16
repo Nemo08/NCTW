@@ -23,39 +23,40 @@ var (
 func main() {
 	//логгер
 	log := logger.NewLogger()
-	log.Info("Запуск NCTW" + gitTag + gitCommit + gitBranch)
+	log.SetLogLevel(2)
+	log.Info("Запуск NCTW, git tag:'" + gitTag + "', git commit:'" + gitCommit + "', git branch:'" + gitBranch + "'")
 
 	//конфигуратор
-	conf := cfg.NewAppConfigLoader()
+	conf := cfg.NewAppConfigLoader(*log)
 
 	//валидатор
 	vld.NewValidator()
 
 	//база
-	database := db.NewSqliteRepository(conf, log)
+	database := db.NewSqliteRepository(conf, *log)
 	defer database.Close()
 
 	//создаем репозитории объектов
-	userrepo := user.NewSqliteRepository(database.GetDB())
+	userrepo := user.NewSqliteRepository(*log, database.GetDB())
 
 	//Автомиграция таблиц
 	database.Migrate(&user.DbUser{})
 
 	//бизнес-логика
-	ucase := user.NewUsecase(log, userrepo)
+	ucase := user.NewUsecase(*log, userrepo)
 
 	//роуты и сервер
 	e := echo.New()
 	e.HideBanner = true
+	e.Use(log.EchoLogger())
+	e.Use(api.CustomContext)
 	e.Pre(middleware.RemoveTrailingSlash())
 	e.Use(middleware.RequestID())
-	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.RequestID())
-	e.Use(api.CustomContext)
 	apiV1Router := e.Group("/api/v1")
 
-	user.NewUserHTTPRouter(log, ucase, apiV1Router)
+	user.NewUserHTTPRouter(*log, ucase, apiV1Router)
 	rout.NewStaticHTTPRouter(e)
 
 	//запуск сервера

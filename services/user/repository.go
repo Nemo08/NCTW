@@ -44,13 +44,15 @@ func user2db(i User) DbUser {
 }
 
 type RepositorySqlite struct {
-	db *gorm.DB
+	db  *gorm.DB
+	log logger.Logr
 }
 
 //NewRepositorySqlite создание объекта репозитория для User
-func NewSqliteRepository(db *gorm.DB) *RepositorySqlite {
+func NewSqliteRepository(log logger.Logr, db *gorm.DB) *RepositorySqlite {
 	return &RepositorySqlite{
-		db: db,
+		db:  db,
+		log: log,
 	}
 }
 
@@ -63,7 +65,7 @@ func (urs *RepositorySqlite) Store(ctx api.Context, user User) (*User, error) {
 	if len(errSlice) != 0 {
 
 		for _, err := range errSlice {
-			logger.Log.LogError("Error while user create", err)
+			urs.log.Error("Error while user create", err)
 			estr = estr + err.Error()
 		}
 		return &user, errors.New("Error while user create:" + estr)
@@ -76,7 +78,7 @@ func (urs *RepositorySqlite) Get(ctx api.Context) ([]*User, int, error) {
 	var users []*User
 	var DbUsers []*DbUser
 	var count int
-
+	urs.log.Info(ctx)
 	urs.db.Model(&DbUsers).Count(&count)
 	g := urs.db.Scopes(repo.Paginate(ctx)).Find(&DbUsers)
 

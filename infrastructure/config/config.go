@@ -14,24 +14,27 @@ type ConfigInterface interface {
 }
 
 type appConfig struct {
+	l logger.Logr
 }
 
-func NewAppConfigLoader() appConfig {
+func NewAppConfigLoader(logr logger.Logr) appConfig {
 	err := godotenv.Load()
 	if err != nil {
-		logger.Log.LogError("Ошибка загрузки .env файла")
+		logr.Error("Ошибка загрузки .env файла")
 
 	}
-	return appConfig{}
+	return appConfig{
+		l: logr,
+	}
 }
 
 func (ac appConfig) Get(param string) string {
-	logger.Log.LogMessage("Читаю переменную окружения '", param, "' = ", os.Getenv(param))
+	ac.l.Info("Читаю переменную окружения '", param, "' = ", os.Getenv(param))
 	return os.Getenv(param)
 }
 
 func (ac appConfig) IsSet(param string) bool {
 	_, set := os.LookupEnv(param)
-	logger.Log.LogMessage("Проверяю переменную окружения '", param, "', она установлена")
+	ac.l.Info("Проверяю переменную окружения '", param, "', она установлена")
 	return set
 }

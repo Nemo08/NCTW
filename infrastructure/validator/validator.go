@@ -9,6 +9,6 @@ import (
 var validate *validator.Validate
 
 func NewValidator() {
-	logger.Log.LogMessage("Создаем валидатор")
+	logger.NewLogger().Info("Создаем валидатор")
 	validate = validator.New()
 }
