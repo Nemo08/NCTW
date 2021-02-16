@@ -2,11 +2,11 @@ package main
 
 import (
 	"github.com/Pallinder/go-randomdata"
+	"go.uber.org/zap"
 	"gopkg.in/guregu/null.v4"
 
 	cfg "github.com/Nemo08/NCTW/infrastructure/config"
 	db "github.com/Nemo08/NCTW/infrastructure/database"
-	"github.com/Nemo08/NCTW/infrastructure/logger"
 	api "github.com/Nemo08/NCTW/services/api"
 	user "github.com/Nemo08/NCTW/services/user"
 )
@@ -25,24 +25,26 @@ func FillDatbaseByUsers(uc *user.UsecaseStruct, c int) {
 
 func main() {
 	//логгер
-	log := logger.NewLogger()
+	//логгер
+	log, _ := zap.NewProduction()
+	defer log.Sync()
 
 	//конфигуратор
-	conf := cfg.NewAppConfigLoader(*log)
+	conf := cfg.NewAppConfigLoader(log)
 
 	//база
-	sqliterepo := db.NewSqliteRepository(conf, *log)
+	sqliterepo := db.NewSqliteRepository(conf, log)
 	defer sqliterepo.Close()
 
 	//создаем репозитории объектов
-	userrepo := user.NewSqliteRepository(*log, sqliterepo.GetDB())
+	userrepo := user.NewSqliteRepository(log, sqliterepo.GetDB())
 	//contrepo := repo.NewContactRepositorySqlite(logger, conf, sqliterepo.GetDB())
 
 	//Автомиграция таблиц
 	sqliterepo.Migrate(&user.DbUser{})
 
 	//бизнес-логика
-	ucase := user.NewUsecase(*log, userrepo)
+	ucase := user.NewUsecase(log, userrepo)
 	//contcase := user.NewContactUsecase(logger, contrepo)
 	FillDatbaseByUsers(ucase, 100)
 }

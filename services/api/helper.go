@@ -11,7 +11,7 @@ type Context struct {
 	log *logrus.Entry
 }
 
-//CustomContext миддлварь для оборачиванияконтекстаэхи в кастомный
+//CustomContext миддлварь для оборачивания контекста эхи в кастомный
 func CustomContext(h echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		cc := Context{

@@ -5,7 +5,7 @@ import (
 
 	"github.com/joho/godotenv"
 
-	"github.com/Nemo08/NCTW/infrastructure/logger"
+	"go.uber.org/zap"
 )
 
 type ConfigInterface interface {
@@ -14,10 +14,10 @@ type ConfigInterface interface {
 }
 
 type appConfig struct {
-	l logger.Logr
+	l *zap.Logger
 }
 
-func NewAppConfigLoader(logr logger.Logr) appConfig {
+func NewAppConfigLoader(logr *zap.Logger) appConfig {
 	err := godotenv.Load()
 	if err != nil {
 		logr.Error("Ошибка загрузки .env файла")
@@ -29,12 +29,12 @@ func NewAppConfigLoader(logr logger.Logr) appConfig {
 }
 
 func (ac appConfig) Get(param string) string {
-	ac.l.Info("Читаю переменную окружения '", param, "' = ", os.Getenv(param))
+	ac.l.Info("Читаю переменную окружения '" + param + "' = " + os.Getenv(param))
 	return os.Getenv(param)
 }
 
 func (ac appConfig) IsSet(param string) bool {
 	_, set := os.LookupEnv(param)
-	ac.l.Info("Проверяю переменную окружения '", param, "', она установлена")
+	ac.l.Info("Проверяю переменную окружения '" + param + "', она установлена")
 	return set
 }
