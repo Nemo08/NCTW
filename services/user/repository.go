@@ -191,8 +191,7 @@ func (urs *RepositorySqlite) CheckPassword(login string, password string) (*User
 	var d DbUser
 	var u User
 
-	g := urs.db.
-		Scopes(repo.CtxLogger(ctx)).Debug().
+	g := urs.db.Debug().
 		Where("login = ? AND password = ?", login, password).
 		Take(&d)
 	if g.Error != nil {

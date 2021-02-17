@@ -23,7 +23,7 @@ func utflower(s string) string {
 //NewSqliteRepository новый объект репозитория sqlite
 func NewSqliteRepository(c cfg.ConfigInterface, log logger.Logr) *sqliteRepository {
 	if !c.IsSet("DBTYPE") || !c.IsSet("DSN") {
-		log.Error("Не установлены переменные окружения: DBTYPE или DBCONNECTIONSTRING")
+		log.Error("Не установлены переменные окружения: DBTYPE или DSN")
 		os.Exit(1)
 	}
 
