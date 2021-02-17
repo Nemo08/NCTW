@@ -6,7 +6,7 @@ import (
 		"github.com/Nemo08/NCTW/services/api"
 )
 
-//UserRepository объект репозитория User
+//Repository объект репозитория User
 type Repository interface {
 	Store(ctx api.Context, User User) (*User, error)
 	Get(ctx api.Context) ([]*User, int64, error)

@@ -12,7 +12,7 @@ import (
 )
 
 //FillDatbaseByUsers заполняет базу фейковыми данными
-func FillDatbaseByUsers(uc *user.UsecaseStruct, c int) {
+func FillDatbaseByUsers(uc user.Usecase, c int) {
 	for i := 0; i < c; i++ {
 		prof := randomdata.GenerateProfile(1)
 		newuser, _ := user.NewUser(

@@ -42,8 +42,7 @@ func user2json(i User) jsonUser {
 }
 
 type userHTTPRouter struct {
-	uc  Usecase
-	log logger.Logr
+	uc Usecase
 }
 
 //NewUserHTTPRouter роутер пользователей
@@ -57,10 +56,10 @@ func NewUserHTTPRouter(log logger.Logr, u Usecase, g *echo.Group) {
 	subr := g.Group("/user")
 	subr.POST("", us.Store)
 	subr.GET("", us.GetUsers)
-	subr.GET("/:id", us.GetUser)
+	subr.GET("/:id", us.GetUserByID, GetByIDValidate)
 	subr.GET("/search/:query", us.Find)
 	subr.PUT("", us.Update)
-	subr.DELETE("/:id", us.Delete)
+	subr.DELETE("/:id", us.DeleteByID)
 }
 
 func (ush *userHTTPRouter) GetUsers(c echo.Context) (err error) {
@@ -70,6 +69,8 @@ func (ush *userHTTPRouter) GetUsers(c echo.Context) (err error) {
 	var jsusers []*jsonUser
 
 	u, count, err := ush.uc.Get(c.(api.Context))
+	//Передаем в ответ количество возвращаемых пользователей
+	c.Response().Header().Set("X-Total-Count", strconv.FormatInt(count, 10))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "error:"+err.Error())
 	}
@@ -79,17 +80,13 @@ func (ush *userHTTPRouter) GetUsers(c echo.Context) (err error) {
 		jsusers = append(jsusers, &j)
 	}
 
-	c.Response().Header().Set("X-Total-Count", strconv.FormatInt(count, 10))
 	return c.JSON(http.StatusOK, jsusers)
 }
 
-func (ush *userHTTPRouter) GetUser(c echo.Context) (err error) {
+func (ush *userHTTPRouter) GetUserByID(c echo.Context) (err error) {
 	c.(api.Context).Log.Info("Http request to get one user with id ", c.Param("id"))
 
-	id, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Error while decoding request body:"+err.Error())
-	}
+	id, _ := uuid.Parse(c.Param("id"))
 
 	var u *User
 	u, err = ush.uc.FindByID(c.(api.Context), id)
@@ -172,7 +169,7 @@ func (ush *userHTTPRouter) Update(c echo.Context) (err error) {
 	return c.JSON(http.StatusOK, j)
 }
 
-func (ush *userHTTPRouter) Delete(c echo.Context) (err error) {
+func (ush *userHTTPRouter) DeleteByID(c echo.Context) (err error) {
 	c.(api.Context).Log.Info("Http request to delete one user with id ", c.Param("id"))
 
 	id, err := uuid.Parse(c.Param("id"))
