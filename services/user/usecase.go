@@ -3,49 +3,48 @@ package user
 import (
 	"github.com/google/uuid"
 
-	log "github.com/Nemo08/NCTW/infrastructure/logger"
-	"github.com/Nemo08/NCTW/infrastructure/router"
+	"github.com/Nemo08/NCTW/services/api"
 )
 
 //UserUsecase основная структура usecase
-type UserUsecase interface {
-	GetUsers(ctx router.ApiContext) ([]*User, int, error)
-	AddUser(ctx router.ApiContext, User User) (*User, error)
-	FindByID(ctx router.ApiContext, id uuid.UUID) (*User, error)
-	Find(ctx router.ApiContext, q string) ([]*User, int, error)
-	UpdateUser(ctx router.ApiContext, User User) (*User, error)
-	DeleteUserByID(ctx router.ApiContext, id uuid.UUID) error
+type Usecase interface {
+	Get(ctx api.Context) ([]*User, int64, error)
+	Add(ctx api.Context, User User) (*User, error)
+	FindByID(ctx api.Context, id uuid.UUID) (*User, error)
+	Find(ctx api.Context, q string) ([]*User, int64, error)
+	Update(ctx api.Context, User User) (*User, error)
+	DeleteByID(ctx api.Context, id uuid.UUID) error
 	CheckPassword(login string, password string) (*User, error)
 }
 
-type UserUsecaseStruct struct {
-	repo UserRepository
+type UsecaseStruct struct {
+	repo Repository
 }
 
 //NewUserUsecase создание объекта usecase для User
-func NewUserUsecase(r UserRepository) *UserUsecaseStruct {
-	return &UserUsecaseStruct{
+func NewUsecase(r Repository) *UsecaseStruct {
+	return &UsecaseStruct{
 		repo: r,
 	}
 }
 
-func (uc *UserUsecaseStruct) GetUsers(ctx router.ApiContext) ([]*User, int, error) {
-	//log.LogMessage("Get users, limit:", limit, "offset:", offset)
+func (uc *UsecaseStruct) Get(ctx api.Context) ([]*User, int64, error) {
+	ctx.Log.Info("Get users")
 
-	users, count, err := uc.repo.GetUsers(ctx)
+	users, count, err := uc.repo.Get(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
 	return users, count, nil
 }
 
-func (uc *UserUsecaseStruct) AddUser(ctx router.ApiContext, u User) (*User, error) {
-	log.LogMessage("Add user", u)
+func (uc *UsecaseStruct) Add(ctx api.Context, u User) (*User, error) {
+	//ctx.Log.Info("Add user", u)
 	return uc.repo.Store(ctx, u)
 }
 
-func (uc *UserUsecaseStruct) FindByID(ctx router.ApiContext, id uuid.UUID) (*User, error) {
-	log.LogMessage("Find user by id ", id)
+func (uc *UsecaseStruct) FindByID(ctx api.Context, id uuid.UUID) (*User, error) {
+	ctx.Log.Info("Find user by id ", id)
 	User, err := uc.repo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -53,8 +52,8 @@ func (uc *UserUsecaseStruct) FindByID(ctx router.ApiContext, id uuid.UUID) (*Use
 	return User, nil
 }
 
-func (uc *UserUsecaseStruct) Find(ctx router.ApiContext, q string) ([]*User, int, error) {
-	//log.LogMessage("Find string info in users:", q, "limit:", limit, "offset:", offset)
+func (uc *UsecaseStruct) Find(ctx api.Context, q string) ([]*User, int64, error) {
+	//ctx.Log.Info("Find string info in users:", q, "limit:", limit, "offset:", offset)
 
 	users, count, err := uc.repo.Find(ctx, q)
 	if err != nil {
@@ -63,17 +62,16 @@ func (uc *UserUsecaseStruct) Find(ctx router.ApiContext, q string) ([]*User, int
 	return users, count, nil
 }
 
-func (uc *UserUsecaseStruct) UpdateUser(ctx router.ApiContext, u User) (*User, error) {
-	log.LogMessage("Update user", u)
-	return uc.repo.UpdateUser(ctx, u)
+func (uc *UsecaseStruct) Update(ctx api.Context, u User) (*User, error) {
+	ctx.Log.Info("Update user", u)
+	return uc.repo.Update(ctx, u)
 }
 
-func (uc *UserUsecaseStruct) DeleteUserByID(ctx router.ApiContext, id uuid.UUID) error {
-	log.LogMessage("Delete user by id ", id)
-	return uc.repo.DeleteUserByID(ctx, id)
+func (uc *UsecaseStruct) DeleteByID(ctx api.Context, id uuid.UUID) error {
+	ctx.Log.Info("Delete user by id ", id)
+	return uc.repo.DeleteByID(ctx, id)
 }
 
-func (uc *UserUsecaseStruct) CheckPassword(login string, password string) (*User, error) {
-	log.LogMessage("Check password of ", login)
+func (uc *UsecaseStruct) CheckPassword(login string, password string) (*User, error) {
 	return uc.repo.CheckPassword(login, password)
 }

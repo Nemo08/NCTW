@@ -5,7 +5,7 @@ import (
 
 	"github.com/joho/godotenv"
 
-	log "github.com/Nemo08/NCTW/infrastructure/logger"
+	"github.com/Nemo08/NCTW/infrastructure/logger"
 )
 
 type ConfigInterface interface {
@@ -14,24 +14,27 @@ type ConfigInterface interface {
 }
 
 type appConfig struct {
+	l logger.Logr
 }
 
-func NewAppConfigLoader() appConfig {
+func NewAppConfigLoader(logr logger.Logr) appConfig {
 	err := godotenv.Load()
 	if err != nil {
-		log.LogError("Ошибка загрузки .env файла")
+		logr.Error("Ошибка загрузки .env файла")
 
 	}
-	return appConfig{}
+	return appConfig{
+		l: logr,
+	}
 }
 
 func (ac appConfig) Get(param string) string {
-	log.LogMessage("Читаю переменную окружения '", param, "' = ", os.Getenv(param))
+	ac.l.Info("Читаю переменную окружения '", param, "' = ", os.Getenv(param))
 	return os.Getenv(param)
 }
 
 func (ac appConfig) IsSet(param string) bool {
 	_, set := os.LookupEnv(param)
-	log.LogMessage("Проверяю переменную окружения '", param, "', она установлена")
+	ac.l.Info("Проверяю переменную окружения '", param, "', она установлена")
 	return set
 }

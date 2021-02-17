@@ -8,3 +8,5 @@ static/*
 app/nctw/__debug_bin
 cmd/nctw/__debug_bin
 cmd/nctw/__debug_bin
+.vscode
+bin
