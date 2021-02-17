@@ -9,7 +9,7 @@ import (
 
 	cfg "github.com/Nemo08/NCTW/infrastructure/config"
 	db "github.com/Nemo08/NCTW/infrastructure/database"
-	"github.com/Nemo08/NCTW/infrastructure/logger"
+	logger "github.com/Nemo08/NCTW/infrastructure/logger"
 	rout "github.com/Nemo08/NCTW/infrastructure/router"
 	vld "github.com/Nemo08/NCTW/infrastructure/validator"
 	api "github.com/Nemo08/NCTW/services/api"
@@ -21,19 +21,17 @@ var (
 )
 
 func main() {
-	//логгер
-	log := logger.NewLogger()
-	log.SetLogLevel(2)
-	log.Info("Запуск NCTW, git tag:'" + gitTag + "', git commit:'" + gitCommit + "', git branch:'" + gitBranch + "'")
+	logger.Log.SetLevel(logger.DebugLevel)
+	logger.Log.Info("Запуск NCTW, git tag:'" + gitTag + "', git commit:'" + gitCommit + "', git branch:'" + gitBranch + "'")
 
 	//конфигуратор
-	conf := cfg.NewAppConfigLoader(*log)
+	conf := cfg.NewAppConfigLoader(logger.Log)
 
 	//валидатор
 	vld.NewValidator()
 
 	//база
-	database := db.NewSqliteRepository(conf, *log)
+	database := db.NewSqliteRepository(conf, logger.Log)
 	defer database.Close()
 
 	//создаем репозитории объектов
@@ -52,19 +50,19 @@ func main() {
 	e.Use(middleware.RequestID())
 	e.Use(middleware.Recover())
 	e.Use(middleware.RequestID())
-	e.Use(log.EchoLogger())
+	e.Use(logger.Log.EchoLogger())
 	e.Use(api.CustomContext)
 	apiV1Router := e.Group("/api/v1")
 
-	user.NewUserHTTPRouter(*log, ucase, apiV1Router)
+	user.NewUserHTTPRouter(logger.Log, ucase, apiV1Router)
 	rout.NewStaticHTTPRouter(e)
 
 	//запуск сервера
 	if !conf.IsSet("SERVEPORT") {
-		log.Error("Переменная окружения SERVEPORT для порта не установлена")
+		logger.Log.Error("Переменная окружения SERVEPORT для порта не установлена")
 		os.Exit(1)
 	}
 	port := conf.Get("SERVEPORT")
-	log.Info("Сервер запущен на порту " + port)
+	logger.Log.Info("Сервер запущен на порту " + port)
 	e.Logger.Fatal(e.Start(":" + port))
 }

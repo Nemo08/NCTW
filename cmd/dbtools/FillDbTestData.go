@@ -25,13 +25,13 @@ func FillDatbaseByUsers(uc *user.UsecaseStruct, c int) {
 
 func main() {
 	//логгер
-	log := logger.NewLogger()
+	log := logger.Log
 
 	//конфигуратор
-	conf := cfg.NewAppConfigLoader(*log)
+	conf := cfg.NewAppConfigLoader(log)
 
 	//база
-	sqliterepo := db.NewSqliteRepository(conf, *log)
+	sqliterepo := db.NewSqliteRepository(conf, log)
 	defer sqliterepo.Close()
 
 	//создаем репозитории объектов
@@ -45,4 +45,5 @@ func main() {
 	ucase := user.NewUsecase(userrepo)
 	//contcase := user.NewContactUsecase(logger, contrepo)
 	FillDatbaseByUsers(ucase, 100)
+	log.Info("Заливка базы тестовыми данными закончена")
 }

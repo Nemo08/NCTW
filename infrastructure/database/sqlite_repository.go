@@ -1,14 +1,13 @@
 package database
 
 import (
-	"database/sql"
 	"os"
 	"strings"
 
-	"github.com/jinzhu/gorm"
-	"github.com/mattn/go-sqlite3"
+	"gorm.io/gorm"
 
 	cfg "github.com/Nemo08/NCTW/infrastructure/config"
+	"github.com/Nemo08/NCTW/infrastructure/database/sq3driver"
 	"github.com/Nemo08/NCTW/infrastructure/logger"
 )
 
@@ -23,37 +22,34 @@ func utflower(s string) string {
 
 //NewSqliteRepository новый объект репозитория sqlite
 func NewSqliteRepository(c cfg.ConfigInterface, log logger.Logr) *sqliteRepository {
-	if !c.IsSet("DBTYPE") || !c.IsSet("DBCONNECTIONSTRING") {
+	if !c.IsSet("DBTYPE") || !c.IsSet("DSN") {
 		log.Error("Не установлены переменные окружения: DBTYPE или DBCONNECTIONSTRING")
 		os.Exit(1)
 	}
 
 	dbtype := c.Get("DBTYPE")
-	if dbtype == "sqlite3" {
-		dbtype = "sqlite3_custom"
-
-		//регистрируем свой драйвер для добавления в sqlite функции utflower
-		//для обеспечения регистронезависимого поиска
-		sql.Register("sqlite3_custom", &sqlite3.SQLiteDriver{
-			ConnectHook: func(conn *sqlite3.SQLiteConn) error {
-				if err := conn.RegisterFunc("utflower", utflower, true); err != nil {
-					return err
-				}
-
-				return nil
-			},
-		})
+	var db *gorm.DB
+	var err error
+	switch dbtype {
+	case "sqlite3":
+		db, err = gorm.Open(
+			sq3driver.Open(c.Get("DSN")), 
+			&gorm.Config{Logger: logger.Log.GormLogger()},
+		)
+	default:
+		{
+			log.Error("База ", c.Get("DBTYPE"), " не поддерживается")
+			os.Exit(1)
+		}
 	}
-
-	db, err := gorm.Open(dbtype, c.Get("DBCONNECTIONSTRING"))
 
 	if err != nil {
 		log.Error(err)
 		os.Exit(1)
 	}
 
-	db.LogMode(true)
-	db.SetLogger(log.GormLogger())
+	//db.LogMode(true)
+	//db.SetLogger(log.GormLogger())
 	return &sqliteRepository{db: db}
 }
 
@@ -62,7 +58,7 @@ func (sq *sqliteRepository) GetDB() *gorm.DB {
 }
 
 func (sq *sqliteRepository) Close() {
-	sq.db.Close()
+	//sq.db.Close()
 }
 
 func (sq *sqliteRepository) Migrate(objs ...interface{}) {

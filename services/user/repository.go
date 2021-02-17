@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jinzhu/gorm"
 	"gopkg.in/guregu/null.v4"
+	"gorm.io/gorm"
 
 	repo "github.com/Nemo08/NCTW/infrastructure/repository"
 	"github.com/Nemo08/NCTW/services/api"
@@ -57,24 +57,19 @@ func (urs *RepositorySqlite) Store(ctx api.Context, user User) (*User, error) {
 	var d DbUser = user2db(user)
 	d.ID = uuid.New()
 
-	errSlice := urs.db.Create(&d).GetErrors()
+	errSlice := urs.db.Create(&d).Error
 	var estr string
-	if len(errSlice) != 0 {
-
-		for _, err := range errSlice {
-			ctx.Log.Error("Error while user create", err)
-			estr = estr + err.Error()
-		}
+	if errSlice != nil {
 		return &user, errors.New("Error while user create:" + estr)
 	}
 	u := db2user(d)
 	return &u, nil
 }
 
-func (urs *RepositorySqlite) Get(ctx api.Context) ([]*User, int, error) {
+func (urs *RepositorySqlite) Get(ctx api.Context) ([]*User, int64, error) {
 	var users []*User
 	var DbUsers []*DbUser
-	var count int
+	var count int64
 	ctx.Log.Info(ctx)
 	urs.db.Model(&DbUsers).Count(&count)
 	g := urs.db.Scopes(repo.Paginate(ctx)).Find(&DbUsers)
@@ -104,16 +99,24 @@ func (urs *RepositorySqlite) FindByID(ctx api.Context, id uuid.UUID) (*User, err
 	return &u, nil
 }
 
-func (urs *RepositorySqlite) Find(ctx api.Context, q string) ([]*User, int, error) {
+func (urs *RepositorySqlite) Find(ctx api.Context, q string) ([]*User, int64, error) {
 	var users []*User
 	var DbUsers []*DbUser
-	var count int
+	var count int64
 
 	//считаем количество результатов в запросе
-	urs.db.Where("utflower(login) LIKE ?", strings.ToLower("%"+q+"%")).Find(&DbUsers).Count(&count)
-	g := urs.db.Scopes(repo.Paginate(ctx)).Where(
-		"(utflower(login) LIKE ?) OR (utflower(email) LIKE ?)",
-		strings.ToLower("%"+q+"%"), strings.ToLower("%"+q+"%")).Find(&DbUsers)
+	urs.db.Debug().
+		Where("(utflower(login) LIKE ?) OR (utflower(email) LIKE ?)",
+			strings.ToLower("%"+q+"%"),
+			strings.ToLower("%"+q+"%")).
+		Find(&DbUsers).
+		Count(&count)
+
+	g := urs.db.Scopes(repo.Paginate(ctx)).
+		Where("(utflower(login) LIKE ?) OR (utflower(email) LIKE ?)",
+			strings.ToLower("%"+q+"%"),
+			strings.ToLower("%"+q+"%")).
+		Find(&DbUsers)
 	if g.Error != nil {
 		return users, 0, g.Error
 	}
@@ -126,10 +129,12 @@ func (urs *RepositorySqlite) Find(ctx api.Context, q string) ([]*User, int, erro
 
 func (urs *RepositorySqlite) Update(ctx api.Context, u User) (*User, error) {
 	d := user2db(u)
-	attrs := make(map[string]interface{})
 
 	if !u.Email.IsZero() {
-		attrs["email"] = u.Email.String
+		g := urs.db.Model(&d).Where("id = ?", d.ID).Update("email", u.Email.String)
+		if g.Error != nil {
+			return &u, g.Error
+		}
 	}
 
 	if !u.Password.IsZero() {
@@ -137,13 +142,11 @@ func (urs *RepositorySqlite) Update(ctx api.Context, u User) (*User, error) {
 		if err != nil {
 			return &u, err
 		}
-		attrs["password_hash"] = hash
 		u.PasswordHash = null.StringFrom(hash)
-	}
-
-	g := urs.db.Model(&d).Where("id = ?", d.ID).Update(attrs)
-	if g.Error != nil {
-		return &u, g.Error
+		g := urs.db.Model(&d).Where("id = ?", d.ID).Update("password_hash", hash)
+		if g.Error != nil {
+			return &u, g.Error
+		}
 	}
 
 	updatedUser, err := urs.FindByID(ctx, d.ID)

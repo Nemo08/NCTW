@@ -8,7 +8,7 @@ import (
 
 //NewStaticHTTPRouter роутер статики
 func NewStaticHTTPRouter(e *echo.Echo) {
-	logger.NewLogger().Info("Создаю роутер статики")
+	logger.Log.Info("Создаю роутер статики")
 
 	e.Static("/", "../../static")
 }

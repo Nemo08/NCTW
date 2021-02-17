@@ -14,10 +14,10 @@ import (
 
 func TestNewSqliteRepository(t *testing.T) {
 	//логгер
-	log := logger.NewLogger()
+	log := logger.Log
 
 	conf := cfg.NewCustomAppConfigLoader()
-	sqliterepo := NewSqliteRepository(conf, *log)
+	sqliterepo := NewSqliteRepository(conf, log)
 	defer sqliterepo.Close()
 
 	sqliterepo.Migrate(&user.DbUser{})
