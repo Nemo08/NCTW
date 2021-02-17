@@ -47,3 +47,9 @@ func findLimits(ctx api.Context) (l int, o int, e error) {
 	//order = ctx.QueryParam("offset")
 	return limit, offset, nil
 }
+
+func CtxLogger(ctx api.Context) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Session(&gorm.Session{Logger: ctx.GormLogger()})
+	}
+}

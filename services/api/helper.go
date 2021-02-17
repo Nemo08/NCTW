@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
+	"moul.io/zapgorm2"
 
 	"github.com/Nemo08/NCTW/infrastructure/logger"
 )
@@ -13,16 +14,20 @@ type Context struct {
 	Log *logger.Logr
 }
 
+func (c *Context) GormLogger() zapgorm2.Logger {
+	return zapgorm2.New(c.Log.Desugar())
+}
+
 //CustomContext миддлварь для оборачивания контекста эхи в кастомный
 func CustomContext(h echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		zl, _ := zap.NewProduction()
 		defer zl.Sync()
-		//l := zl.Sugar().With(zap.String("request_id", c.Response().Header().Get("X-Request-ID")))
-		log := logger.Log
+
+		log := logger.Log.WithField("request_id", c.Response().Header().Get("X-Request-ID"))
 		cc := Context{
 			c,
-			log.WithField("request_id", c.Response().Header().Get("X-Request-ID")),
+			log,
 		}
 		return h(cc)
 	}

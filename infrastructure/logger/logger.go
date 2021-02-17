@@ -6,9 +6,9 @@ import (
 
 	"github.com/brpaz/echozap"
 	"github.com/labstack/echo/v4"
-	"github.com/wantedly/gorm-zap"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"moul.io/zapgorm2"
 )
 
 const (
@@ -49,6 +49,17 @@ func newLogger() Logr {
 	}
 }
 
+func (lg *Logr) GormLogger() zapgorm2.Logger {
+	l := zapgorm2.New(lg.SugaredLogger.Desugar())
+	l.SetAsDefault() // optional: configure gorm to use this zapgorm.Logger for callbacks
+
+	return l
+}
+
+func (lg *Logr) EchoLogger() echo.MiddlewareFunc {
+	return echozap.ZapLogger(lg.Desugar())
+}
+
 func (lg *Logr) WithField(key string, value interface{}) *Logr {
 	return &Logr{
 		SugaredLogger: *lg.With(zap.String(key, value.(string))),
@@ -58,13 +69,6 @@ func (lg *Logr) WithField(key string, value interface{}) *Logr {
 
 func (lg *Logr) SetLevel(l zapcore.Level) {
 	lg.atom.SetLevel(l)
-}
-
-func (lg *Logr) GormLogger() *gormzap.Logger {
-	return gorm-zap.New(lg.Desugar())
-
-func (lg *Logr) EchoLogger() echo.MiddlewareFunc{
-	return echozap.ZapLogger(lg.Desugar())
 }
 
 func init() {

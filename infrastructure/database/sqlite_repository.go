@@ -32,10 +32,7 @@ func NewSqliteRepository(c cfg.ConfigInterface, log logger.Logr) *sqliteReposito
 	var err error
 	switch dbtype {
 	case "sqlite3":
-		db, err = gorm.Open(
-			sq3driver.Open(c.Get("DSN")), 
-			&gorm.Config{Logger: logger.Log.GormLogger()},
-		)
+		db, err = gorm.Open(sq3driver.Open(c.Get("DSN")), &gorm.Config{Logger: logger.Log.GormLogger()})
 	default:
 		{
 			log.Error("База ", c.Get("DBTYPE"), " не поддерживается")

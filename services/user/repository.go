@@ -105,14 +105,14 @@ func (urs *RepositorySqlite) Find(ctx api.Context, q string) ([]*User, int64, er
 	var count int64
 
 	//считаем количество результатов в запросе
-	urs.db.Debug().
+	urs.db.Scopes(repo.Paginate(ctx), repo.CtxLogger(ctx)).Debug().
 		Where("(utflower(login) LIKE ?) OR (utflower(email) LIKE ?)",
 			strings.ToLower("%"+q+"%"),
 			strings.ToLower("%"+q+"%")).
 		Find(&DbUsers).
 		Count(&count)
 
-	g := urs.db.Scopes(repo.Paginate(ctx)).
+	g := urs.db.Scopes(repo.Paginate(ctx), repo.CtxLogger(ctx)).
 		Where("(utflower(login) LIKE ?) OR (utflower(email) LIKE ?)",
 			strings.ToLower("%"+q+"%"),
 			strings.ToLower("%"+q+"%")).
