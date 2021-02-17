@@ -1,70 +1,76 @@
 package logger
 
 import (
-	"github.com/Nemo08/NCTW/services/api"
+	//"github.com/Nemo08/NCTW/services/api"
+	"os"
+
 	"github.com/brpaz/echozap"
 	"github.com/labstack/echo/v4"
-	gormzap "github.com/wantedly/gorm-zap"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"moul.io/zapgorm2"
+)
+
+const (
+	DebugLevel  = zap.DebugLevel
+	InfoLevel   = zap.InfoLevel
+	WarnLevel   = zap.WarnLevel
+	ErrorLevel  = zap.ErrorLevel
+	DPanicLevel = zap.DPanicLevel
+	PanicLevel  = zap.PanicLevel
+	FatalLevel  = zap.FatalLevel
 )
 
 type Logr struct {
-	z     zap.Logger
-	level int //0 - all, 1 - warning and up, 2 - erorrs
+	zap.SugaredLogger
+	atom *zap.AtomicLevel
 }
 
-func NewLogger() *Logr {
-	zl, _ := zap.NewProduction()
+var Log Logr
+
+func newLogger() Logr {
+	atom := zap.NewAtomicLevel()
+	encoderCfg := zap.NewProductionEncoderConfig()
+
+	zl := zap.New(
+		zapcore.NewCore(
+			zapcore.NewJSONEncoder(encoderCfg),
+			zapcore.Lock(os.Stdout),
+			atom,
+		),
+		zap.AddCaller(),
+	)
+
 	defer zl.Sync()
-	return &Logr{
-		z: *zl,
+
+	return Logr{
+		SugaredLogger: *zl.Sugar(),
+		atom:          &atom,
 	}
+}
+
+func (lg *Logr) GormLogger() zapgorm2.Logger {
+	l := zapgorm2.New(lg.SugaredLogger.Desugar())
+	l.SetAsDefault() // optional: configure gorm to use this zapgorm.Logger for callbacks
+
+	return l
+}
+
+func (lg *Logr) EchoLogger() echo.MiddlewareFunc {
+	return echozap.ZapLogger(lg.Desugar())
 }
 
 func (lg *Logr) WithField(key string, value interface{}) *Logr {
 	return &Logr{
-		z: *lg.z.With(zap.String(key, value.(string))),
+		SugaredLogger: *lg.With(zap.String(key, value.(string))),
+		atom:          lg.atom,
 	}
 }
 
-func (lg *Logr) WithContext(ctx api.Context) *Logr {
-	return &Logr{
-		z: *lg.z.With(zap.String("request_id", ctx.Response().Header().Get("X-Request-ID"))),
-	}
+func (lg *Logr) SetLevel(l zapcore.Level) {
+	lg.atom.SetLevel(l)
 }
 
-func (lg *Logr) Info(args ...interface{}) {
-	if lg.level == 0 {
-		lg.z.Sugar().Info(args)
-	}
-}
-
-func (lg *Logr) Warn(args ...interface{}) {
-	if lg.level <= 1 {
-		lg.z.Sugar().Warn(args)
-	}
-}
-
-func (lg *Logr) Error(args ...interface{}) {
-	if lg.level <= 2 {
-		lg.z.Sugar().Error(args)
-	}
-}
-
-func (lg *Logr) SetLogLevel(l int) {
-	if l > 2 {
-		l = 2
-	}
-	if l < 0 {
-		l = 0
-	}
-	lg.level = l
-}
-
-func (lg *Logr) GormLogger() *gormzap.Logger {
-	return gormzap.New(&lg.z)
-}
-
-func (lg *Logr) EchoLogger() echo.MiddlewareFunc {
-	return echozap.ZapLogger(&lg.z)
+func init() {
+	Log = newLogger()
 }

@@ -2,6 +2,7 @@ package user
 
 import (
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/google/uuid"
@@ -78,7 +79,7 @@ func (ush *userHTTPRouter) GetUsers(c echo.Context) (err error) {
 		jsusers = append(jsusers, &j)
 	}
 
-	c.Response().Header().Set("X-Total-Count", strconv.Itoa(count))
+	c.Response().Header().Set("X-Total-Count", strconv.FormatInt(count, 10))
 	return c.JSON(http.StatusOK, jsusers)
 }
 
@@ -104,6 +105,10 @@ func (ush *userHTTPRouter) Find(c echo.Context) (err error) {
 	c.(api.Context).Log.Info("Http request to find users with query ", c.Param("query"))
 
 	q := c.Param("query")
+	q, err = url.QueryUnescape(q)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Query unescape error")
+	}
 	if len(q) < 3 {
 		return echo.NewHTTPError(http.StatusBadRequest, "Too short query string")
 	}
@@ -120,7 +125,7 @@ func (ush *userHTTPRouter) Find(c echo.Context) (err error) {
 		jsusers = append(jsusers, &j)
 	}
 
-	c.Response().Header().Set("X-Total-Count", strconv.Itoa(count))
+	c.Response().Header().Set("X-Total-Count", strconv.FormatInt(count, 10))
 	if len(jsusers) == 0 {
 		return c.NoContent(http.StatusOK)
 	}

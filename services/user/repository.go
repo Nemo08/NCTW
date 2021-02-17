@@ -1,13 +1,12 @@
 package user
 
 import (
-	"errors"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jinzhu/gorm"
 	"gopkg.in/guregu/null.v4"
+	"gorm.io/gorm"
 
 	repo "github.com/Nemo08/NCTW/infrastructure/repository"
 	"github.com/Nemo08/NCTW/services/api"
@@ -57,27 +56,30 @@ func (urs *RepositorySqlite) Store(ctx api.Context, user User) (*User, error) {
 	var d DbUser = user2db(user)
 	d.ID = uuid.New()
 
-	errSlice := urs.db.Create(&d).GetErrors()
-	var estr string
-	if len(errSlice) != 0 {
-
-		for _, err := range errSlice {
-			ctx.Log.Error("Error while user create", err)
-			estr = estr + err.Error()
-		}
-		return &user, errors.New("Error while user create:" + estr)
+	err := urs.db.
+		Scopes(repo.CtxLogger(ctx)).Debug().
+		Create(&d).
+		Error
+	if err != nil {
+		return &user, err
 	}
 	u := db2user(d)
 	return &u, nil
 }
 
-func (urs *RepositorySqlite) Get(ctx api.Context) ([]*User, int, error) {
+func (urs *RepositorySqlite) Get(ctx api.Context) ([]*User, int64, error) {
 	var users []*User
 	var DbUsers []*DbUser
-	var count int
+	var count int64
 	ctx.Log.Info(ctx)
-	urs.db.Model(&DbUsers).Count(&count)
-	g := urs.db.Scopes(repo.Paginate(ctx)).Find(&DbUsers)
+
+	urs.db.
+		Scopes(repo.CtxLogger(ctx)).Debug().
+		Model(&DbUsers).
+		Count(&count)
+	g := urs.db.
+		Scopes(repo.Paginate(ctx), repo.CtxLogger(ctx)).Debug().
+		Find(&DbUsers)
 
 	if g.Error != nil {
 		return users, count, g.Error
@@ -95,7 +97,9 @@ func (urs *RepositorySqlite) FindByID(ctx api.Context, id uuid.UUID) (*User, err
 	var d DbUser
 	var u User
 
-	g := urs.db.Where("id = ?", id).First(&d)
+	g := urs.db.
+		Scopes(repo.CtxLogger(ctx)).Debug().Where("id = ?", id).
+		First(&d)
 	if g.Error != nil {
 		return &u, g.Error
 	}
@@ -104,16 +108,26 @@ func (urs *RepositorySqlite) FindByID(ctx api.Context, id uuid.UUID) (*User, err
 	return &u, nil
 }
 
-func (urs *RepositorySqlite) Find(ctx api.Context, q string) ([]*User, int, error) {
+func (urs *RepositorySqlite) Find(ctx api.Context, q string) ([]*User, int64, error) {
 	var users []*User
 	var DbUsers []*DbUser
-	var count int
+	var count int64
 
 	//считаем количество результатов в запросе
-	urs.db.Where("utflower(login) LIKE ?", strings.ToLower("%"+q+"%")).Find(&DbUsers).Count(&count)
-	g := urs.db.Scopes(repo.Paginate(ctx)).Where(
-		"(utflower(login) LIKE ?) OR (utflower(email) LIKE ?)",
-		strings.ToLower("%"+q+"%"), strings.ToLower("%"+q+"%")).Find(&DbUsers)
+	urs.db.
+		Scopes(repo.Paginate(ctx), repo.CtxLogger(ctx)).Debug().
+		Where("(utflower(login) LIKE ?) OR (utflower(email) LIKE ?)",
+			strings.ToLower("%"+q+"%"),
+			strings.ToLower("%"+q+"%")).
+		Find(&DbUsers).
+		Count(&count)
+
+	g := urs.db.
+		Scopes(repo.Paginate(ctx), repo.CtxLogger(ctx)).
+		Where("(utflower(login) LIKE ?) OR (utflower(email) LIKE ?)",
+			strings.ToLower("%"+q+"%"),
+			strings.ToLower("%"+q+"%")).
+		Find(&DbUsers)
 	if g.Error != nil {
 		return users, 0, g.Error
 	}
@@ -126,10 +140,16 @@ func (urs *RepositorySqlite) Find(ctx api.Context, q string) ([]*User, int, erro
 
 func (urs *RepositorySqlite) Update(ctx api.Context, u User) (*User, error) {
 	d := user2db(u)
-	attrs := make(map[string]interface{})
 
 	if !u.Email.IsZero() {
-		attrs["email"] = u.Email.String
+		g := urs.db.
+			Scopes(repo.CtxLogger(ctx)).Debug().
+			Model(&d).
+			Where("id = ?", d.ID).
+			Update("email", u.Email.String)
+		if g.Error != nil {
+			return &u, g.Error
+		}
 	}
 
 	if !u.Password.IsZero() {
@@ -137,13 +157,15 @@ func (urs *RepositorySqlite) Update(ctx api.Context, u User) (*User, error) {
 		if err != nil {
 			return &u, err
 		}
-		attrs["password_hash"] = hash
 		u.PasswordHash = null.StringFrom(hash)
-	}
-
-	g := urs.db.Model(&d).Where("id = ?", d.ID).Update(attrs)
-	if g.Error != nil {
-		return &u, g.Error
+		g := urs.db.
+			Scopes(repo.CtxLogger(ctx)).Debug().
+			Model(&d).
+			Where("id = ?", d.ID).
+			Update("password_hash", hash)
+		if g.Error != nil {
+			return &u, g.Error
+		}
 	}
 
 	updatedUser, err := urs.FindByID(ctx, d.ID)
@@ -155,7 +177,10 @@ func (urs *RepositorySqlite) Update(ctx api.Context, u User) (*User, error) {
 }
 
 func (urs *RepositorySqlite) DeleteByID(ctx api.Context, id uuid.UUID) error {
-	g := urs.db.Where("id = ?", id).Delete(&DbUser{})
+	g := urs.db.
+		Scopes(repo.CtxLogger(ctx)).Debug().
+		Where("id = ?", id).
+		Delete(&DbUser{})
 	if g.Error != nil {
 		return g.Error
 	}
@@ -166,7 +191,10 @@ func (urs *RepositorySqlite) CheckPassword(login string, password string) (*User
 	var d DbUser
 	var u User
 
-	g := urs.db.Where("login = ? AND password = ?", login, password).Take(&d)
+	g := urs.db.
+		Scopes(repo.CtxLogger(ctx)).Debug().
+		Where("login = ? AND password = ?", login, password).
+		Take(&d)
 	if g.Error != nil {
 		return &u, g.Error
 	}

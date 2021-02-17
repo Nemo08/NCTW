@@ -8,10 +8,10 @@ import (
 
 //UserUsecase основная структура usecase
 type Usecase interface {
-	Get(ctx api.Context) ([]*User, int, error)
+	Get(ctx api.Context) ([]*User, int64, error)
 	Add(ctx api.Context, User User) (*User, error)
 	FindByID(ctx api.Context, id uuid.UUID) (*User, error)
-	Find(ctx api.Context, q string) ([]*User, int, error)
+	Find(ctx api.Context, q string) ([]*User, int64, error)
 	Update(ctx api.Context, User User) (*User, error)
 	DeleteByID(ctx api.Context, id uuid.UUID) error
 	CheckPassword(login string, password string) (*User, error)
@@ -28,7 +28,7 @@ func NewUsecase(r Repository) *UsecaseStruct {
 	}
 }
 
-func (uc *UsecaseStruct) Get(ctx api.Context) ([]*User, int, error) {
+func (uc *UsecaseStruct) Get(ctx api.Context) ([]*User, int64, error) {
 	ctx.Log.Info("Get users")
 
 	users, count, err := uc.repo.Get(ctx)
@@ -39,7 +39,7 @@ func (uc *UsecaseStruct) Get(ctx api.Context) ([]*User, int, error) {
 }
 
 func (uc *UsecaseStruct) Add(ctx api.Context, u User) (*User, error) {
-	ctx.Log.Info("Add user", u)
+	//ctx.Log.Info("Add user", u)
 	return uc.repo.Store(ctx, u)
 }
 
@@ -52,7 +52,7 @@ func (uc *UsecaseStruct) FindByID(ctx api.Context, id uuid.UUID) (*User, error) 
 	return User, nil
 }
 
-func (uc *UsecaseStruct) Find(ctx api.Context, q string) ([]*User, int, error) {
+func (uc *UsecaseStruct) Find(ctx api.Context, q string) ([]*User, int64, error) {
 	//ctx.Log.Info("Find string info in users:", q, "limit:", limit, "offset:", offset)
 
 	users, count, err := uc.repo.Find(ctx, q)
