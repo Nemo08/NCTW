@@ -54,12 +54,12 @@ func NewUserHTTPRouter(log logger.Logr, u Usecase, g *echo.Group) {
 	}
 
 	subr := g.Group("/user")
-	subr.POST("", us.Store)
+	subr.POST("", us.Store, NewUserValidate)
 	subr.GET("", us.GetUsers)
-	subr.GET("/:id", us.GetUserByID, GetByIDValidate)
+	subr.GET("/:id", us.GetUserByID, IDValidate)
 	subr.GET("/search/:query", us.Find)
 	subr.PUT("", us.Update)
-	subr.DELETE("/:id", us.DeleteByID)
+	subr.DELETE("/:id", us.DeleteByID, IDValidate)
 }
 
 func (ush *userHTTPRouter) GetUsers(c echo.Context) (err error) {
