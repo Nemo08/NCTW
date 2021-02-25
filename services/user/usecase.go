@@ -8,7 +8,7 @@ import (
 
 //Usecase основная структура usecase
 type Usecase interface {
-	Get(ctx api.Context) ([]*User, int64, error)
+	Get(ctx api.Context) ([]*User, error)
 	Add(ctx api.Context, User User) (*User, error)
 	FindByID(ctx api.Context, id uuid.UUID) (*User, error)
 	Find(ctx api.Context, q string) ([]*User, error)
@@ -28,14 +28,14 @@ func NewUsecase(r Repository) *usecaseStruct {
 	}
 }
 
-func (uc *usecaseStruct) Get(ctx api.Context) ([]*User, int64, error) {
+func (uc *usecaseStruct) Get(ctx api.Context) ([]*User, error) {
 	ctx.Log.Info("Get users")
 
-	users, count, err := uc.repo.Get(ctx)
+	users, err := uc.repo.Get(ctx)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
-	return users, count, nil
+	return users, nil
 }
 
 func (uc *usecaseStruct) Add(ctx api.Context, u User) (*User, error) {
@@ -54,6 +54,7 @@ func (uc *usecaseStruct) FindByID(ctx api.Context, id uuid.UUID) (*User, error) 
 
 func (uc *usecaseStruct) Find(ctx api.Context, q string) ([]*User, error) {
 	//ctx.Log.Info("Find string info in users:", q, "limit:", limit, "offset:", offset)
+
 	users, err := uc.repo.Find(ctx, q)
 	if err != nil {
 		return nil, err

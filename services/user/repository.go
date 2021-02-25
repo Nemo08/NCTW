@@ -69,7 +69,7 @@ func (urs *repositorySqlite) Store(ctx api.Context, user User) (*User, error) {
 }
 
 //Get получает пользователя из базы
-func (urs *repositorySqlite) Get(ctx api.Context) ([]*User, int64, error) {
+func (urs *repositorySqlite) Get(ctx api.Context) ([]*User, error) {
 	var users []*User
 	var DbUsers []*DbUser
 	var count int64
@@ -84,7 +84,7 @@ func (urs *repositorySqlite) Get(ctx api.Context) ([]*User, int64, error) {
 		Find(&DbUsers)
 
 	if g.Error != nil {
-		return users, count, g.Error
+		return users, g.Error
 	}
 
 	for _, d := range DbUsers {
@@ -92,7 +92,7 @@ func (urs *repositorySqlite) Get(ctx api.Context) ([]*User, int64, error) {
 		users = append(users, &e)
 	}
 
-	return users, count, nil
+	return users, nil
 }
 
 //FindByID ищет пользователя в базе по ИД

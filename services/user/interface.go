@@ -9,7 +9,7 @@ import (
 //Repository объект репозитория User
 type Repository interface {
 	Store(ctx api.Context, User User) (*User, error)
-	Get(ctx api.Context) ([]*User, int64, error)
+	Get(ctx api.Context) ([]*User, error)
 	FindByID(ctx api.Context, id uuid.UUID) (*User, error)
 	Find(ctx api.Context, q string) ([]*User, error)
 	Update(ctx api.Context, User User) (*User, error)

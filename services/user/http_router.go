@@ -75,7 +75,7 @@ func (ush *userHTTPRouter) GetUsers(c echo.Context) (err error) {
 	var u []*User
 	var juo []*jsonUserOutput
 	//Получаем пользователей
-	u, count, err := ush.uc.Get(c.(api.Context))
+	u, err = ush.uc.Get(c.(api.Context))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "error:"+err.Error())
 	}
@@ -88,7 +88,7 @@ func (ush *userHTTPRouter) GetUsers(c echo.Context) (err error) {
 		return c.NoContent(http.StatusOK)
 	}
 	//Передаем в ответ в заголовке количество возвращаемых пользователей
-	c.Response().Header().Set("X-Total-Count", strconv.FormatInt(count, 10))
+	c.Response().Header().Set("X-Total-Count", strconv.FormatInt(int64(len(u)), 10))
 	return c.JSON(http.StatusOK, juo)
 }
 
@@ -207,11 +207,7 @@ func (ush *userHTTPRouter) Update(c echo.Context) (err error) {
 	//Валидация данных
 	err = NewUserValidate(juu)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Validation error1:"+err.Error())
-	}
-	//Проверяем, что ид не пустой
-	if IDValidate(juu.ID) != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Validation error2:"+err.Error())
+		return echo.NewHTTPError(http.StatusBadRequest, "Validation error:"+err.Error())
 	}
 	//Копируем данные из запроса с преобразованием
 	user := User{}
