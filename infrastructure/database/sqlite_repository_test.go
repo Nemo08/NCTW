@@ -33,7 +33,7 @@ func TestNewSqliteRepository(t *testing.T) {
 		t.Error("Ошибка в добавлении пользователя ", err.Error())
 	}
 
-	u, _, err := ucase.Find(api.Context{}, "логин")
+	u, err := ucase.Find(api.Context{}, "логин")
 	if err != nil {
 		t.Error("Ошибка в поиске пользователя ", err.Error())
 	}

@@ -45,7 +45,7 @@ func main() {
 	e.HideBanner = true
 	e.Pre(middleware.RemoveTrailingSlash())
 	e.Use(middleware.RequestID())
-	e.Use(middleware.Recover())
+	//e.Use(middleware.Recover())
 	e.Use(middleware.RequestID())
 	e.Use(logger.Log.EchoLogger())
 	e.Use(api.CustomContext)

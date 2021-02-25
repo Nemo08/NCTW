@@ -11,7 +11,7 @@ type Usecase interface {
 	Get(ctx api.Context) ([]*User, int64, error)
 	Add(ctx api.Context, User User) (*User, error)
 	FindByID(ctx api.Context, id uuid.UUID) (*User, error)
-	Find(ctx api.Context, q string) ([]*User, int64, error)
+	Find(ctx api.Context, q string) ([]*User, error)
 	Update(ctx api.Context, User User) (*User, error)
 	DeleteByID(ctx api.Context, id uuid.UUID) error
 	CheckPassword(login string, password string) (*User, error)
@@ -52,14 +52,13 @@ func (uc *usecaseStruct) FindByID(ctx api.Context, id uuid.UUID) (*User, error) 
 	return User, nil
 }
 
-func (uc *usecaseStruct) Find(ctx api.Context, q string) ([]*User, int64, error) {
+func (uc *usecaseStruct) Find(ctx api.Context, q string) ([]*User, error) {
 	//ctx.Log.Info("Find string info in users:", q, "limit:", limit, "offset:", offset)
-
-	users, count, err := uc.repo.Find(ctx, q)
+	users, err := uc.repo.Find(ctx, q)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
-	return users, count, nil
+	return users, nil
 }
 
 func (uc *usecaseStruct) Update(ctx api.Context, u User) (*User, error) {

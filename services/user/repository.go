@@ -112,7 +112,7 @@ func (urs *repositorySqlite) FindByID(ctx api.Context, id uuid.UUID) (*User, err
 }
 
 //Find ищет в базе емейл, логин и прочее, совпадающее с запросом
-func (urs *repositorySqlite) Find(ctx api.Context, q string) ([]*User, int64, error) {
+func (urs *repositorySqlite) Find(ctx api.Context, q string) ([]*User, error) {
 	var users []*User
 	var DbUsers []*DbUser
 	var count int64
@@ -133,13 +133,13 @@ func (urs *repositorySqlite) Find(ctx api.Context, q string) ([]*User, int64, er
 			strings.ToLower("%"+q+"%")).
 		Find(&DbUsers)
 	if g.Error != nil {
-		return users, 0, g.Error
+		return users, g.Error
 	}
 	for _, d := range DbUsers {
 		e := db2user(*d)
 		users = append(users, &e)
 	}
-	return users, count, nil
+	return users, nil
 }
 
 func (urs *repositorySqlite) Update(ctx api.Context, u User) (*User, error) {
@@ -156,17 +156,12 @@ func (urs *repositorySqlite) Update(ctx api.Context, u User) (*User, error) {
 		}
 	}
 
-	if !u.Password.IsZero() {
-		hash, err := CreateHash(u.Password.String)
-		if err != nil {
-			return &u, err
-		}
-		u.PasswordHash = null.StringFrom(hash)
+	if !u.PasswordHash.IsZero() {
 		g := urs.db.
 			Scopes(repo.CtxLogger(ctx)).Debug().
 			Model(&d).
 			Where("id = ?", d.ID).
-			Update("password_hash", hash)
+			Update("password_hash", u.PasswordHash.String)
 		if g.Error != nil {
 			return &u, g.Error
 		}

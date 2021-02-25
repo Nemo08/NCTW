@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/google/uuid"
+	"github.com/jinzhu/copier"
 	"github.com/labstack/echo/v4"
 	"gopkg.in/guregu/null.v4"
 
@@ -13,32 +14,26 @@ import (
 	"github.com/Nemo08/NCTW/services/api"
 )
 
-type jsonUser struct {
-	ID           uuid.UUID   `json:"id"`
-	Login        null.String `json:"login"`
-	Password     null.String `json:",omitempty"`
-	PasswordHash null.String `json:"-"`
-	Email        null.String `json:"email"`
+//jsonUserInput структура входящих данных
+type jsonUserInput struct {
+	ID       uuid.UUID   `json:"id" validate:"omitempty,uuid_rfc4122"`
+	Login    null.String `json:"login" validate:"required,ascii"`
+	Password null.String `json:",omitempty" validate:"required,ascii,lt=101,gt=4"`
+	Email    null.String `json:"email" validate:"required,email"`
 }
 
-//json2user Json объект копируем в Entity
-func json2user(i jsonUser) User {
-	return User{
-		ID:           i.ID,
-		Login:        i.Login,
-		PasswordHash: i.PasswordHash,
-		Email:        i.Email,
-		Password:     i.Password,
-	}
+//jsonUserOutput структура исходящих данных
+type jsonUserOutput struct {
+	ID    uuid.UUID   `json:"id"`
+	Login null.String `json:"login"`
+	Email null.String `json:"email"`
 }
 
-//user2json Entity объект копируем в Json
-func user2json(i User) jsonUser {
-	return jsonUser{
-		ID:    i.ID,
-		Login: i.Login,
-		Email: i.Email,
-	}
+type jsonUserUpdate struct {
+	ID       string      `json:"id" validate:"required,uuid4"`
+	Login    null.String `json:"login" validate:"omitempty,ascii"`
+	Password null.String `json:",omitempty" validate:"omitempty,ascii,lt=101,gt=4"`
+	Email    null.String `json:"email" validate:"omitempty,email"`
 }
 
 type userHTTPRouter struct {
@@ -54,133 +49,217 @@ func NewUserHTTPRouter(log logger.Logr, u Usecase, g *echo.Group) {
 	}
 
 	subr := g.Group("/user")
-	subr.POST("", us.Store, NewUserValidate)
+	subr.Use(SetZeroCount)
+	subr.POST("", us.Store)
 	subr.GET("", us.GetUsers)
-	subr.GET("/:id", us.GetUserByID, IDValidate)
+	subr.GET("/:id", us.GetUserByID)
 	subr.GET("/search/:query", us.Find)
 	subr.PUT("", us.Update)
-	subr.DELETE("/:id", us.DeleteByID, IDValidate)
+	subr.DELETE("/:id", us.DeleteByID)
 }
 
+//SetZeroCount устанавливает нулевое количество возвращенных объектов в заголовке
+func SetZeroCount(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		c.Response().Header().Set("X-Total-Count", "0")
+		return next(c)
+	}
+}
+
+//GetUsers получаем пользователей
+//Пагинация пробрасывается к базе в контексте
 func (ush *userHTTPRouter) GetUsers(c echo.Context) (err error) {
 	c.(api.Context).Log.Info("Запрошены пользователи постранично")
 
+	//Нечего валидировать
 	var u []*User
-	var jsusers []*jsonUser
-
+	var juo []*jsonUserOutput
+	//Получаем пользователей
 	u, count, err := ush.uc.Get(c.(api.Context))
-	//Передаем в ответ количество возвращаемых пользователей
-	c.Response().Header().Set("X-Total-Count", strconv.FormatInt(count, 10))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "error:"+err.Error())
 	}
-
-	for _, d := range u {
-		j := user2json(*d)
-		jsusers = append(jsusers, &j)
+	//Копируем данные в ответ с преобразованием
+	if copier.Copy(&juo, &u) != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "error:"+err.Error())
 	}
-
-	return c.JSON(http.StatusOK, jsusers)
+	//При отсутствии результатов отправляем "нет контента"
+	if len(juo) == 0 {
+		return c.NoContent(http.StatusOK)
+	}
+	//Передаем в ответ в заголовке количество возвращаемых пользователей
+	c.Response().Header().Set("X-Total-Count", strconv.FormatInt(count, 10))
+	return c.JSON(http.StatusOK, juo)
 }
 
+//GetUserByID получаем пользователя по ID
 func (ush *userHTTPRouter) GetUserByID(c echo.Context) (err error) {
 	c.(api.Context).Log.Info("Http request to get one user with id ", c.Param("id"))
 
+	//Валидация ID
+	err = IDValidate(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Validation error:"+err.Error())
+	}
+	//Делаем UUID из запроса
 	id, _ := uuid.Parse(c.Param("id"))
-
-	var u *User
-	u, err = ush.uc.FindByID(c.(api.Context), id)
+	//Ищем
+	user, err := ush.uc.FindByID(c.(api.Context), id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "error:"+err.Error())
 	}
-
-	j := user2json(*u)
-	return c.JSON(http.StatusOK, j)
+	//При отсутствии результатов отправляем "нет контента"
+	if user == nil {
+		return c.NoContent(http.StatusOK)
+	}
+	//Копируем данные в ответ с преобразованием
+	juo := jsonUserOutput{}
+	if copier.Copy(&juo, &user) != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "error:"+err.Error())
+	}
+	//Передаем в ответ в заголовке количество возвращаемых пользователей
+	c.Response().Header().Set("X-Total-Count", "1")
+	return c.JSON(http.StatusOK, juo)
 }
 
 func (ush *userHTTPRouter) Find(c echo.Context) (err error) {
 	c.(api.Context).Log.Info("Http request to find users with query ", c.Param("query"))
 
+	//Достаем запрос
 	q := c.Param("query")
 	q, err = url.QueryUnescape(q)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Query unescape error")
 	}
+	//Валидация
 	if len(q) < 3 {
 		return echo.NewHTTPError(http.StatusBadRequest, "Too short query string")
 	}
-
-	var u []*User
-	u, count, err := ush.uc.Find(c.(api.Context), q)
+	//Ищем
+	var users []*User
+	users, err = ush.uc.Find(c.(api.Context), q)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "error:"+err.Error())
 	}
-
-	var jsusers []*jsonUser
-	for _, d := range u {
-		j := user2json(*d)
-		jsusers = append(jsusers, &j)
-	}
-
-	c.Response().Header().Set("X-Total-Count", strconv.FormatInt(count, 10))
-	if len(jsusers) == 0 {
+	//При отсутствии результатов отправляем "нет контента"
+	if len(users) == 0 {
 		return c.NoContent(http.StatusOK)
 	}
-	return c.JSON(http.StatusOK, jsusers)
+	//Копируем данные в ответ с преобразованием
+	var juo []*jsonUserOutput
+	if copier.Copy(&juo, &users) != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "error:"+err.Error())
+	}
+	//При отсутствии результатов отправляем "нет контента"
+	if len(juo) == 0 {
+		return c.NoContent(http.StatusOK)
+	}
+	//Пишем в ответ количество записей данных
+	c.Response().Header().Set("X-Total-Count", strconv.FormatInt(int64(len(juo)), 10))
+	return c.JSON(http.StatusOK, juo)
 }
 
 func (ush *userHTTPRouter) Store(c echo.Context) (err error) {
 	c.(api.Context).Log.Info("Запрос на сохранение одного пользователя")
-
-	j := &jsonUser{}
-
-	if err = c.Bind(j); err != nil {
+	//Достаем данные из запроса
+	jui := &jsonUserInput{}
+	if err = c.Bind(jui); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Error while decoding request body: "+err.Error())
 	}
-
-	u, err := NewUser(j.Login, j.Password, j.Email)
+	//Валидация данных
+	err = NewUserValidate(*jui)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Validation error:"+err.Error())
+	}
+	//Копируем данные из запроса с преобразованием
+	user := User{}
+	if copier.Copy(&user, &jui) != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "error:"+err.Error())
+	}
+	//Генерируем хэш пароля
+	passwordHash, err := CreateHash(jui.Password.String)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error while user store: "+err.Error())
 	}
-
-	u2, err := ush.uc.Add(c.(api.Context), u)
+	user.PasswordHash = null.StringFrom(passwordHash)
+	//Пишем в базу, получаем с ИДом из базы
+	user2, err := ush.uc.Add(c.(api.Context), user)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error while user store: "+err.Error())
 	}
-
-	*j = user2json(*u2)
-	return c.JSON(http.StatusOK, j)
+	//Копируем данные в ответ с преобразованием
+	juo := jsonUserOutput{}
+	if copier.Copy(&juo, &user2) != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Error while user store:"+err.Error())
+	}
+	//Пишем в ответ количество записей данных
+	c.Response().Header().Set("X-Total-Count", "1")
+	return c.JSON(http.StatusOK, juo)
 }
 
 func (ush *userHTTPRouter) Update(c echo.Context) (err error) {
 	c.(api.Context).Log.Info("Запрос на апдейт одного пользователя")
-
-	j := &jsonUser{}
-	if err = c.Bind(j); err != nil {
+	//Достаем данные из запроса
+	juu := jsonUserUpdate{}
+	if err = c.Bind(&juu); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Error while decoding request body: "+err.Error())
 	}
-
-	u, err := ush.uc.Update(c.(api.Context), json2user(*j))
+	//Валидация данных
+	err = NewUserValidate(juu)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Validation error1:"+err.Error())
+	}
+	//Проверяем, что ид не пустой
+	if IDValidate(juu.ID) != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Validation error2:"+err.Error())
+	}
+	//Копируем данные из запроса с преобразованием
+	user := User{}
+	if copier.Copy(&user, &juu) != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "error:"+err.Error())
+	}
+	//Если пароль не пустой - генерируем хэш пароля
+	if !juu.Password.IsZero() {
+		passwordHash, err := CreateHash(juu.Password.String)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Error while user store: "+err.Error())
+		}
+		user.PasswordHash = null.StringFrom(passwordHash)
+	}
+	//Сохраняем в базу и получаем обновленный
+	user2, err := ush.uc.Update(c.(api.Context), user)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error while user store: "+err.Error())
 	}
-
-	*j = user2json(*u)
-	return c.JSON(http.StatusOK, j)
+	//Копируем данные в ответ с преобразованием
+	juo := jsonUserOutput{}
+	if copier.Copy(&juo, &user2) != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "error:"+err.Error())
+	}
+	//Передаем в ответ в заголовке количество возвращаемых пользователей
+	c.Response().Header().Set("X-Total-Count", "1")
+	return c.JSON(http.StatusOK, juo)
 }
 
+//DeleteByID удаляет пользователя по ID
 func (ush *userHTTPRouter) DeleteByID(c echo.Context) (err error) {
 	c.(api.Context).Log.Info("Http request to delete one user with id ", c.Param("id"))
-
+	//Валидация ID
+	err = IDValidate(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "error:"+err.Error())
+	}
+	//Делаем UUID из запроса
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Error while decoding request body:"+err.Error())
 	}
-
+	//Удаляем по ID
 	err = ush.uc.DeleteByID(c.(api.Context), id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error while delete user:"+err.Error())
 	}
-
+	//Передаем в ответ в заголовке количество возвращаемых пользователей
+	c.Response().Header().Set("X-Total-Count", "0")
 	return c.JSON(http.StatusOK, id)
 }
