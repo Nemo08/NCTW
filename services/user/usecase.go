@@ -9,7 +9,7 @@ import (
 //Usecase основная структура usecase
 type Usecase interface {
 	Get(ctx api.Context) ([]*User, error)
-	Add(ctx api.Context, User User) (*User, error)
+	Store(ctx api.Context, User User) (*User, error)
 	FindByID(ctx api.Context, id uuid.UUID) (*User, error)
 	Find(ctx api.Context, q string) ([]*User, error)
 	Update(ctx api.Context, User User) (*User, error)
@@ -38,7 +38,7 @@ func (uc *usecaseStruct) Get(ctx api.Context) ([]*User, error) {
 	return users, nil
 }
 
-func (uc *usecaseStruct) Add(ctx api.Context, u User) (*User, error) {
+func (uc *usecaseStruct) Store(ctx api.Context, u User) (*User, error) {
 	//ctx.Log.Info("Add user", u)
 	return uc.repo.Store(ctx, u)
 }

@@ -183,7 +183,7 @@ func (ush *userHTTPRouter) Store(c echo.Context) (err error) {
 	}
 	user.PasswordHash = null.StringFrom(passwordHash)
 	//Пишем в базу, получаем с ИДом из базы
-	user2, err := ush.uc.Add(c.(api.Context), user)
+	user2, err := ush.uc.Store(c.(api.Context), user)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error while user store: "+err.Error())
 	}

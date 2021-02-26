@@ -28,7 +28,7 @@ func TestNewSqliteRepository(t *testing.T) {
 		Login:        null.StringFrom("ЛОГин"),
 		PasswordHash: null.StringFrom(""),
 	}
-	d, err := ucase.Add(api.Context{}, a)
+	d, err := ucase.Store(api.Context{}, a)
 	if err != nil {
 		t.Error("Ошибка в добавлении пользователя ", err.Error())
 	}

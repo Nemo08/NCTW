@@ -19,7 +19,7 @@ func FillDatbaseByUsers(uc user.Usecase, c int) {
 			null.NewString(prof.Name.First+prof.Name.Last+randomdata.Digits(3), true),
 			null.NewString(prof.Login.Password, true),
 			null.NewString(prof.Email+randomdata.Digits(3), true))
-		uc.Add(api.Context{}, newuser)
+		uc.Store(api.Context{}, newuser)
 	}
 }
 
