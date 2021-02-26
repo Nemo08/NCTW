@@ -21,9 +21,11 @@ func (c *Context) GormLogger() zapgorm2.Logger {
 //CustomContext миддлварь для оборачивания контекста эхи в кастомный
 func CustomContext(h echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		//устанавливаем нулевое количество возвращенных объектов в заголовке
+		c.Response().Header().Set("X-Total-Count", "0")
+		//добавляем свой логгер
 		zl, _ := zap.NewProduction()
 		defer zl.Sync()
-
 		log := logger.Log.WithField("request_id", c.Response().Header().Get("X-Request-ID"))
 		cc := Context{
 			c,
