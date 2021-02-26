@@ -7,11 +7,11 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type service struct {
+type Service struct {
 	handlers []commandHandlerStruct
 }
 
-func (svc *service) NewCommandHandler(commandName string, usecase func(sc ServiceContext) error, dataType interface{}) error {
+func (svc *Service) NewCommandHandler(commandName string, usecase func(sc ServiceContext) error, dataType interface{}) *commandHandlerStruct {
 	var (
 		chs commandHandlerStruct = commandHandlerStruct{}
 	)
@@ -19,11 +19,11 @@ func (svc *service) NewCommandHandler(commandName string, usecase func(sc Servic
 	chs.name = commandName
 	chs.usecase = usecase
 	chs.dataType = dataType
-	svc.handlers[len(svc.handlers)] = chs
-	return nil
+	svc.handlers = append(svc.handlers, chs)
+	return &chs
 }
 
-func (svc *service) RunCommand(sc ServiceContext, name string) error {
+func (svc *Service) RunCommand(sc ServiceContext, name string) error {
 	for _, v := range svc.handlers {
 		if v.name == name {
 			//валидация входящих данных
@@ -38,7 +38,7 @@ func (svc *service) RunCommand(sc ServiceContext, name string) error {
 	return errors.New("command not found")
 }
 
-func (svc *service) getDataType(name string) interface{} {
+func (svc *Service) getDataType(name string) interface{} {
 	for _, v := range svc.handlers {
 		if v.name == name {
 			return v.dataType
@@ -47,37 +47,39 @@ func (svc *service) getDataType(name string) interface{} {
 	return nil
 }
 
-func (svc *service) EchoEndpoint(ctx echo.Context, command string) (err error) {
-	ctx.Response().Header().Set("X-Total-Count", "0")
-
-	tp := svc.getDataType(command)
-	if err = ctx.Bind(tp); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Error while decoding request body: "+err.Error())
-	}
-
-	l := newLogger()
-	reqID := ctx.Response().Header().Get("X-Request-ID")
-	if reqID != "" {
-		l = *l.WithField("request_id", reqID)
-	}
-
-	customContext := ServiceContext{
-		requestData: tp,
-		Log:         &l,
-	}
-
-	err = svc.RunCommand(customContext, command)
-	if err != nil {
-		return err
-	}
-
-	return ctx.JSON(http.StatusOK, customContext.responseData)
-}
-
-func (svc *service) DataValidate(sc ServiceContext, comm commandHandlerStruct) error {
+func (svc *Service) DataValidate(sc ServiceContext, comm commandHandlerStruct) error {
 	return dataValidate(sc, comm)
 }
 
-func NewService() service {
-	return service{}
+func NewService() Service {
+	return Service{}
+}
+
+func (svc *Service) EchoEndpoint(name string) func(ctx echo.Context) error {
+	return func(ctx echo.Context) error {
+		ctx.Response().Header().Set("X-Total-Count", "0")
+
+		tp := svc.getDataType(name)
+		if err := ctx.Bind(&tp); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "Error while decoding request body: "+err.Error())
+		}
+
+		l := newLogger()
+		reqID := ctx.Response().Header().Get("X-Request-ID")
+		if reqID != "" {
+			l = *l.WithField("request_id", reqID)
+		}
+
+		customContext := ServiceContext{
+			RequestData: tp,
+			Log:         &l,
+		}
+
+		err := svc.RunCommand(customContext, name)
+		if err != nil {
+			return err
+		}
+
+		return ctx.JSON(http.StatusOK, customContext.ResponseData)
+	}
 }

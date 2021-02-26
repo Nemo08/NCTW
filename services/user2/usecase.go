@@ -1,20 +1,18 @@
 package user2
 
 import (
+	"github.com/Nemo08/NCTW/infrastructure/core"
 	"github.com/google/uuid"
-
-	"github.com/Nemo08/NCTW/services/api"
 )
 
 //Usecase основная структура usecase
 type Usecase interface {
-	Get(ctx api.Context) ([]*User, error)
-	Store(ctx api.Context, User User) (*User, error)
-	FindByID(ctx api.Context, id uuid.UUID) (*User, error)
-	Find(ctx api.Context, q string) ([]*User, error)
-	Update(ctx api.Context, User User) (*User, error)
-	DeleteByID(ctx api.Context, id uuid.UUID) error
-	CheckPassword(login string, password string) (*User, error)
+	Get(ctx core.ServiceContext) error
+	Store(ctx core.ServiceContext, User User) error
+	FindByID(ctx core.ServiceContext, id uuid.UUID) error
+	Find(ctx core.ServiceContext, q string) error
+	Update(ctx core.ServiceContext, User User) error
+	DeleteByID(ctx core.ServiceContext, id uuid.UUID) error
 }
 
 type usecaseStruct struct {
@@ -28,50 +26,31 @@ func NewUsecase(r Repository) *usecaseStruct {
 	}
 }
 
-func (uc *usecaseStruct) Get(ctx api.Context) ([]*User, error) {
+func (uc *usecaseStruct) Get(ctx core.ServiceContext) error {
 	ctx.Log.Info("Get users")
-
-	users, err := uc.repo.Get(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return users, nil
+	return uc.repo.Get(ctx)
 }
 
-func (uc *usecaseStruct) Store(ctx api.Context, u User) (*User, error) {
+func (uc *usecaseStruct) Store(ctx core.ServiceContext, u User) error {
 	//ctx.Log.Info("Add user", u)
 	return uc.repo.Store(ctx, u)
 }
 
-func (uc *usecaseStruct) FindByID(ctx api.Context, id uuid.UUID) (*User, error) {
+func (uc *usecaseStruct) FindByID(ctx core.ServiceContext, id uuid.UUID) error {
 	ctx.Log.Info("Find user by id ", id)
-	User, err := uc.repo.FindByID(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-	return User, nil
+	return uc.repo.FindByID(ctx, id)
 }
 
-func (uc *usecaseStruct) Find(ctx api.Context, q string) ([]*User, error) {
-	//ctx.Log.Info("Find string info in users:", q, "limit:", limit, "offset:", offset)
-
-	users, err := uc.repo.Find(ctx, q)
-	if err != nil {
-		return nil, err
-	}
-	return users, nil
+func (uc *usecaseStruct) Find(ctx core.ServiceContext, q string) error {
+	return uc.repo.Find(ctx, q)
 }
 
-func (uc *usecaseStruct) Update(ctx api.Context, u User) (*User, error) {
+func (uc *usecaseStruct) Update(ctx core.ServiceContext, u User) error {
 	ctx.Log.Info("Update user", u)
 	return uc.repo.Update(ctx, u)
 }
 
-func (uc *usecaseStruct) DeleteByID(ctx api.Context, id uuid.UUID) error {
+func (uc *usecaseStruct) DeleteByID(ctx core.ServiceContext, id uuid.UUID) error {
 	ctx.Log.Info("Delete user by id ", id)
 	return uc.repo.DeleteByID(ctx, id)
-}
-
-func (uc *usecaseStruct) CheckPassword(login string, password string) (*User, error) {
-	return uc.repo.CheckPassword(login, password)
 }

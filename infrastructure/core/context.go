@@ -1,8 +1,8 @@
 package core
 
 type ServiceContext struct {
-	requestData  interface{}
-	responseData interface{}
+	RequestData  interface{}
+	ResponseData interface{}
 	param        map[string]string
 	Log *Logr
 }

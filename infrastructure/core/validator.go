@@ -11,7 +11,7 @@ import (
 func dataValidate(sc ServiceContext, comm commandHandlerStruct) error {
 	validate := validator.New()
 	validate.RegisterCustomTypeFunc(validateValuer, null.String{}, null.Int{}, null.Bool{}, null.Time{}, null.Float{})
-	return validate.Struct(sc.requestData)
+	return validate.Struct(sc.RequestData)
 }
 
 func validateValuer(field reflect.Value) interface{} {

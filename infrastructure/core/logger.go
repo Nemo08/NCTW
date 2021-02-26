@@ -54,6 +54,7 @@ func (lg *Logr) GormLogger() zapgorm2.Logger {
 	return l
 }
 
+
 func (lg *Logr) WithField(key string, value interface{}) *Logr {
 	return &Logr{
 		SugaredLogger: *lg.With(zap.String(key, value.(string))),
