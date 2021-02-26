@@ -49,21 +49,12 @@ func NewUserHTTPRouter(log logger.Logr, u Usecase, g *echo.Group) {
 	}
 
 	subr := g.Group("/user")
-	subr.Use(SetZeroCount)
 	subr.POST("", us.Store)
 	subr.GET("", us.GetUsers)
 	subr.GET("/:id", us.GetUserByID)
 	subr.GET("/search/:query", us.Find)
 	subr.PUT("", us.Update)
 	subr.DELETE("/:id", us.DeleteByID)
-}
-
-//SetZeroCount устанавливает нулевое количество возвращенных объектов в заголовке
-func SetZeroCount(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		c.Response().Header().Set("X-Total-Count", "0")
-		return next(c)
-	}
 }
 
 //GetUsers получаем пользователей
