@@ -18,6 +18,7 @@ func (svc *service) NewCommandHandler(commandName string, usecase func(sc Servic
 
 	chs.name = commandName
 	chs.usecase = usecase
+	chs.dataType = dataType
 	svc.handlers[len(svc.handlers)] = chs
 	return nil
 }
