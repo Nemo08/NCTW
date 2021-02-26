@@ -11,7 +11,6 @@ import (
 	db "github.com/Nemo08/NCTW/infrastructure/database"
 	logger "github.com/Nemo08/NCTW/infrastructure/logger"
 	rout "github.com/Nemo08/NCTW/infrastructure/router"
-	vld "github.com/Nemo08/NCTW/infrastructure/validator"
 	api "github.com/Nemo08/NCTW/services/api"
 	user "github.com/Nemo08/NCTW/services/user"
 )
@@ -21,14 +20,12 @@ var (
 )
 
 func main() {
+	//логгер
 	logger.Log.SetLevel(logger.DebugLevel)
-	logger.Log.Info("Запуск NCTW, git tag:'" + gitTag + "', git commit:'" + gitCommit + "', git branch:'" + gitBranch + "'")
+	logger.Log.Info("Запуск NCTW, git tag:'", gitTag, "', git commit:'", gitCommit, "', git branch:'", gitBranch, "'")
 
 	//конфигуратор
 	conf := cfg.NewAppConfigLoader(logger.Log)
-
-	//валидатор
-	vld.NewValidator()
 
 	//база
 	database := db.NewSqliteRepository(conf, logger.Log)

@@ -28,6 +28,7 @@ func NewSqliteRepository(c cfg.ConfigInterface, log logger.Logr) *sqliteReposito
 	}
 
 	dbtype := c.Get("DBTYPE")
+	
 	var db *gorm.DB
 	var err error
 	switch dbtype {
@@ -45,8 +46,6 @@ func NewSqliteRepository(c cfg.ConfigInterface, log logger.Logr) *sqliteReposito
 		os.Exit(1)
 	}
 
-	//db.LogMode(true)
-	//db.SetLogger(log.GormLogger())
 	return &sqliteRepository{db: db}
 }
 

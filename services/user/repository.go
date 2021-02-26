@@ -41,18 +41,19 @@ func user2db(i User) DbUser {
 	}
 }
 
-type RepositorySqlite struct {
+type repositorySqlite struct {
 	db *gorm.DB
 }
 
-//NewRepositorySqlite создание объекта репозитория для User
-func NewSqliteRepository(db *gorm.DB) *RepositorySqlite {
-	return &RepositorySqlite{
+//NewSqliteRepository создание объекта репозитория для User
+func NewSqliteRepository(db *gorm.DB) *repositorySqlite {
+	return &repositorySqlite{
 		db: db,
 	}
 }
 
-func (urs *RepositorySqlite) Store(ctx api.Context, user User) (*User, error) {
+//Store сохраняет пользователя в базе
+func (urs *repositorySqlite) Store(ctx api.Context, user User) (*User, error) {
 	var d DbUser = user2db(user)
 	d.ID = uuid.New()
 
@@ -67,7 +68,8 @@ func (urs *RepositorySqlite) Store(ctx api.Context, user User) (*User, error) {
 	return &u, nil
 }
 
-func (urs *RepositorySqlite) Get(ctx api.Context) ([]*User, int64, error) {
+//Get получает пользователя из базы
+func (urs *repositorySqlite) Get(ctx api.Context) ([]*User, error) {
 	var users []*User
 	var DbUsers []*DbUser
 	var count int64
@@ -82,7 +84,7 @@ func (urs *RepositorySqlite) Get(ctx api.Context) ([]*User, int64, error) {
 		Find(&DbUsers)
 
 	if g.Error != nil {
-		return users, count, g.Error
+		return users, g.Error
 	}
 
 	for _, d := range DbUsers {
@@ -90,10 +92,11 @@ func (urs *RepositorySqlite) Get(ctx api.Context) ([]*User, int64, error) {
 		users = append(users, &e)
 	}
 
-	return users, count, nil
+	return users, nil
 }
 
-func (urs *RepositorySqlite) FindByID(ctx api.Context, id uuid.UUID) (*User, error) {
+//FindByID ищет пользователя в базе по ИД
+func (urs *repositorySqlite) FindByID(ctx api.Context, id uuid.UUID) (*User, error) {
 	var d DbUser
 	var u User
 
@@ -108,7 +111,8 @@ func (urs *RepositorySqlite) FindByID(ctx api.Context, id uuid.UUID) (*User, err
 	return &u, nil
 }
 
-func (urs *RepositorySqlite) Find(ctx api.Context, q string) ([]*User, int64, error) {
+//Find ищет в базе емейл, логин и прочее, совпадающее с запросом
+func (urs *repositorySqlite) Find(ctx api.Context, q string) ([]*User, error) {
 	var users []*User
 	var DbUsers []*DbUser
 	var count int64
@@ -129,16 +133,16 @@ func (urs *RepositorySqlite) Find(ctx api.Context, q string) ([]*User, int64, er
 			strings.ToLower("%"+q+"%")).
 		Find(&DbUsers)
 	if g.Error != nil {
-		return users, 0, g.Error
+		return users, g.Error
 	}
 	for _, d := range DbUsers {
 		e := db2user(*d)
 		users = append(users, &e)
 	}
-	return users, count, nil
+	return users, nil
 }
 
-func (urs *RepositorySqlite) Update(ctx api.Context, u User) (*User, error) {
+func (urs *repositorySqlite) Update(ctx api.Context, u User) (*User, error) {
 	d := user2db(u)
 
 	if !u.Email.IsZero() {
@@ -152,17 +156,12 @@ func (urs *RepositorySqlite) Update(ctx api.Context, u User) (*User, error) {
 		}
 	}
 
-	if !u.Password.IsZero() {
-		hash, err := CreateHash(u.Password.String)
-		if err != nil {
-			return &u, err
-		}
-		u.PasswordHash = null.StringFrom(hash)
+	if !u.PasswordHash.IsZero() {
 		g := urs.db.
 			Scopes(repo.CtxLogger(ctx)).Debug().
 			Model(&d).
 			Where("id = ?", d.ID).
-			Update("password_hash", hash)
+			Update("password_hash", u.PasswordHash.String)
 		if g.Error != nil {
 			return &u, g.Error
 		}
@@ -176,18 +175,16 @@ func (urs *RepositorySqlite) Update(ctx api.Context, u User) (*User, error) {
 	return updatedUser, nil
 }
 
-func (urs *RepositorySqlite) DeleteByID(ctx api.Context, id uuid.UUID) error {
+func (urs *repositorySqlite) DeleteByID(ctx api.Context, id uuid.UUID) error {
 	g := urs.db.
 		Scopes(repo.CtxLogger(ctx)).Debug().
 		Where("id = ?", id).
 		Delete(&DbUser{})
-	if g.Error != nil {
-		return g.Error
-	}
-	return nil
+
+	return g.Error
 }
 
-func (urs *RepositorySqlite) CheckPassword(login string, password string) (*User, error) {
+func (urs *repositorySqlite) CheckPassword(login string, password string) (*User, error) {
 	var d DbUser
 	var u User
 

@@ -11,7 +11,6 @@ type User struct {
 	ID           uuid.UUID
 	Login        null.String
 	PasswordHash null.String
-	Password     null.String
 	Email        null.String
 }
 
@@ -24,7 +23,7 @@ func CreateHash(s string) (string, error) {
 //NewUser конструктор
 func NewUser(login, password, email null.String) (User, error) {
 	stringHash, err := CreateHash(password.String)
-	
+
 	if err != nil {
 		return User{}, err
 	}
@@ -33,7 +32,6 @@ func NewUser(login, password, email null.String) (User, error) {
 		ID:           uuid.New(),
 		Login:        login,
 		PasswordHash: null.StringFrom(stringHash),
-		Password:     null.StringFrom(""),
 		Email:        email,
 	}, err
 }

@@ -6,44 +6,44 @@ import (
 	"github.com/Nemo08/NCTW/services/api"
 )
 
-//UserUsecase основная структура usecase
+//Usecase основная структура usecase
 type Usecase interface {
-	Get(ctx api.Context) ([]*User, int64, error)
-	Add(ctx api.Context, User User) (*User, error)
+	Get(ctx api.Context) ([]*User, error)
+	Store(ctx api.Context, User User) (*User, error)
 	FindByID(ctx api.Context, id uuid.UUID) (*User, error)
-	Find(ctx api.Context, q string) ([]*User, int64, error)
+	Find(ctx api.Context, q string) ([]*User, error)
 	Update(ctx api.Context, User User) (*User, error)
 	DeleteByID(ctx api.Context, id uuid.UUID) error
 	CheckPassword(login string, password string) (*User, error)
 }
 
-type UsecaseStruct struct {
+type usecaseStruct struct {
 	repo Repository
 }
 
 //NewUserUsecase создание объекта usecase для User
-func NewUsecase(r Repository) *UsecaseStruct {
-	return &UsecaseStruct{
+func NewUsecase(r Repository) *usecaseStruct {
+	return &usecaseStruct{
 		repo: r,
 	}
 }
 
-func (uc *UsecaseStruct) Get(ctx api.Context) ([]*User, int64, error) {
+func (uc *usecaseStruct) Get(ctx api.Context) ([]*User, error) {
 	ctx.Log.Info("Get users")
 
-	users, count, err := uc.repo.Get(ctx)
+	users, err := uc.repo.Get(ctx)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
-	return users, count, nil
+	return users, nil
 }
 
-func (uc *UsecaseStruct) Add(ctx api.Context, u User) (*User, error) {
+func (uc *usecaseStruct) Store(ctx api.Context, u User) (*User, error) {
 	//ctx.Log.Info("Add user", u)
 	return uc.repo.Store(ctx, u)
 }
 
-func (uc *UsecaseStruct) FindByID(ctx api.Context, id uuid.UUID) (*User, error) {
+func (uc *usecaseStruct) FindByID(ctx api.Context, id uuid.UUID) (*User, error) {
 	ctx.Log.Info("Find user by id ", id)
 	User, err := uc.repo.FindByID(ctx, id)
 	if err != nil {
@@ -52,26 +52,26 @@ func (uc *UsecaseStruct) FindByID(ctx api.Context, id uuid.UUID) (*User, error) 
 	return User, nil
 }
 
-func (uc *UsecaseStruct) Find(ctx api.Context, q string) ([]*User, int64, error) {
+func (uc *usecaseStruct) Find(ctx api.Context, q string) ([]*User, error) {
 	//ctx.Log.Info("Find string info in users:", q, "limit:", limit, "offset:", offset)
 
-	users, count, err := uc.repo.Find(ctx, q)
+	users, err := uc.repo.Find(ctx, q)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
-	return users, count, nil
+	return users, nil
 }
 
-func (uc *UsecaseStruct) Update(ctx api.Context, u User) (*User, error) {
+func (uc *usecaseStruct) Update(ctx api.Context, u User) (*User, error) {
 	ctx.Log.Info("Update user", u)
 	return uc.repo.Update(ctx, u)
 }
 
-func (uc *UsecaseStruct) DeleteByID(ctx api.Context, id uuid.UUID) error {
+func (uc *usecaseStruct) DeleteByID(ctx api.Context, id uuid.UUID) error {
 	ctx.Log.Info("Delete user by id ", id)
 	return uc.repo.DeleteByID(ctx, id)
 }
 
-func (uc *UsecaseStruct) CheckPassword(login string, password string) (*User, error) {
+func (uc *usecaseStruct) CheckPassword(login string, password string) (*User, error) {
 	return uc.repo.CheckPassword(login, password)
 }
