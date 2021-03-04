@@ -3,7 +3,7 @@ package router
 import (
 	"github.com/labstack/echo/v4"
 
-	"github.com/Nemo08/NCTW/infrastructure/logger"
+	"nctw/infrastructure/logger"
 )
 
 //NewStaticHTTPRouter роутер статики

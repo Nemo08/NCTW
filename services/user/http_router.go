@@ -10,8 +10,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"gopkg.in/guregu/null.v4"
 
-	"github.com/Nemo08/NCTW/infrastructure/logger"
-	"github.com/Nemo08/NCTW/services/api"
+	"nctw/infrastructure/logger"
+	"nctw/services/api"
 )
 
 //jsonUserInput структура входящих данных

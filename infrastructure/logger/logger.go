@@ -1,7 +1,7 @@
 package logger
 
 import (
-	//"github.com/Nemo08/NCTW/services/api"
+	//"nctw/services/api"
 	"os"
 
 	"github.com/brpaz/echozap"

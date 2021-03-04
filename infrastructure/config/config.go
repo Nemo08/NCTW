@@ -5,7 +5,7 @@ import (
 
 	"github.com/joho/godotenv"
 
-	"github.com/Nemo08/NCTW/infrastructure/logger"
+	"nctw/infrastructure/logger"
 )
 
 type ConfigInterface interface {

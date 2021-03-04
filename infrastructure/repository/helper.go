@@ -5,7 +5,7 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/Nemo08/NCTW/services/api"
+	"nctw/services/api"
 )
 
 func Paginate(ctx api.Context) func(db *gorm.DB) *gorm.DB {

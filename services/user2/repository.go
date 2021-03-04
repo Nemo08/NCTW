@@ -8,7 +8,7 @@ import (
 	"gopkg.in/guregu/null.v4"
 	"gorm.io/gorm"
 
-	"github.com/Nemo08/NCTW/infrastructure/core"
+	"nctw/infrastructure/core"
 )
 
 type Repository interface {

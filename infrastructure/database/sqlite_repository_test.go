@@ -6,10 +6,10 @@ import (
 	"github.com/google/uuid"
 	"gopkg.in/guregu/null.v4"
 
-	cfg "github.com/Nemo08/NCTW/infrastructure/config"
-	"github.com/Nemo08/NCTW/infrastructure/logger"
-	api "github.com/Nemo08/NCTW/services/api"
-	user "github.com/Nemo08/NCTW/services/user"
+	cfg "nctw/infrastructure/config"
+	"nctw/infrastructure/logger"
+	api "nctw/services/api"
+	user "nctw/services/user"
 )
 
 func TestNewSqliteRepository(t *testing.T) {

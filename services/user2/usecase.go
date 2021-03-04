@@ -1,7 +1,8 @@
 package user2
 
 import (
-	"github.com/Nemo08/NCTW/infrastructure/core"
+	"nctw/infrastructure/core"
+
 	"github.com/google/uuid"
 )
 

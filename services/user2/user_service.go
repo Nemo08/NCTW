@@ -1,10 +1,10 @@
 package user2
 
 import (
-	"github.com/Nemo08/NCTW/infrastructure/config"
-	"github.com/Nemo08/NCTW/infrastructure/core"
-	"github.com/Nemo08/NCTW/infrastructure/database"
-	"github.com/Nemo08/NCTW/infrastructure/logger"
+	"nctw/infrastructure/config"
+	"nctw/infrastructure/core"
+	"nctw/infrastructure/database"
+	"nctw/infrastructure/logger"
 )
 
 func UserService() core.Service {

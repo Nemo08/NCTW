@@ -7,10 +7,10 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
-	cfg "github.com/Nemo08/NCTW/infrastructure/config"
-	logger "github.com/Nemo08/NCTW/infrastructure/logger"
-	rout "github.com/Nemo08/NCTW/infrastructure/router"
-	"github.com/Nemo08/NCTW/services/user2"
+	cfg "nctw/infrastructure/config"
+	logger "nctw/infrastructure/logger"
+	rout "nctw/infrastructure/router"
+	"nctw/services/user2"
 )
 
 var (

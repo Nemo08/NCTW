@@ -1,7 +1,7 @@
 package core
 
 import (
-	//"github.com/Nemo08/NCTW/services/api"
+	//"nctw/services/api"
 	"os"
 
 	"go.uber.org/zap"
@@ -53,7 +53,6 @@ func (lg *Logr) GormLogger() zapgorm2.Logger {
 
 	return l
 }
-
 
 func (lg *Logr) WithField(key string, value interface{}) *Logr {
 	return &Logr{

@@ -3,7 +3,7 @@ package user
 import (
 	"github.com/google/uuid"
 
-	"github.com/Nemo08/NCTW/services/api"
+	"nctw/services/api"
 )
 
 //Usecase основная структура usecase

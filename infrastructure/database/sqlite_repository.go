@@ -6,9 +6,9 @@ import (
 
 	"gorm.io/gorm"
 
-	cfg "github.com/Nemo08/NCTW/infrastructure/config"
-	"github.com/Nemo08/NCTW/infrastructure/database/sq3driver"
-	"github.com/Nemo08/NCTW/infrastructure/logger"
+	cfg "nctw/infrastructure/config"
+	"nctw/infrastructure/database/sq3driver"
+	"nctw/infrastructure/logger"
 )
 
 type sqliteRepository struct {
@@ -28,7 +28,7 @@ func NewSqliteRepository(c cfg.ConfigInterface, log logger.Logr) *sqliteReposito
 	}
 
 	dbtype := c.Get("DBTYPE")
-	
+
 	var db *gorm.DB
 	var err error
 	switch dbtype {

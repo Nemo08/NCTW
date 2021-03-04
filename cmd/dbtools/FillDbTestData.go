@@ -4,11 +4,11 @@ import (
 	"github.com/Pallinder/go-randomdata"
 	"gopkg.in/guregu/null.v4"
 
-	cfg "github.com/Nemo08/NCTW/infrastructure/config"
-	db "github.com/Nemo08/NCTW/infrastructure/database"
-	"github.com/Nemo08/NCTW/infrastructure/logger"
-	api "github.com/Nemo08/NCTW/services/api"
-	user "github.com/Nemo08/NCTW/services/user"
+	cfg "nctw/infrastructure/config"
+	db "nctw/infrastructure/database"
+	"nctw/infrastructure/logger"
+	api "nctw/services/api"
+	user "nctw/services/user"
 )
 
 //FillDatbaseByUsers заполняет базу фейковыми данными

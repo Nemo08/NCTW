@@ -5,7 +5,7 @@ import (
 	"go.uber.org/zap"
 	"moul.io/zapgorm2"
 
-	"github.com/Nemo08/NCTW/infrastructure/logger"
+	"nctw/infrastructure/logger"
 )
 
 //Context структура для проброса "контекста" по цепочке запроса
