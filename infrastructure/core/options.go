@@ -1,5 +1,7 @@
 package core
 
+import "reflect"
+
 type CommandOption func(*commandHandlerStruct)
 
 //Name добавляет имя команды
@@ -18,7 +20,7 @@ func Description(descr string) CommandOption {
 
 //DataType принимает тип данных, с которым будет работать команда
 //Также в типе должны присутствовать аннотации валидатора
-func DataType(dataStruct interface{}) CommandOption {
+func DataType(dataStruct reflect.Type) CommandOption {
 	return func(chs *commandHandlerStruct) {
 		chs.dataType = dataStruct
 	}

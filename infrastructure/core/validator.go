@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	"reflect"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/go-playground/validator/v10"
 	"gopkg.in/guregu/null.v4"
 )
@@ -11,7 +12,8 @@ import (
 func dataValidate(sc ServiceContext, comm commandHandlerStruct) error {
 	validate := validator.New()
 	validate.RegisterCustomTypeFunc(validateValuer, null.String{}, null.Int{}, null.Bool{}, null.Time{}, null.Float{})
-	return validate.Struct(sc.RequestData)
+	spew.Dump("VAL", sc.RequestData)
+	return validate.Struct(sc.RequestData.(comm.dataType))
 }
 
 func validateValuer(field reflect.Value) interface{} {

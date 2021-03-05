@@ -2,8 +2,11 @@ package core
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
+	"reflect"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/labstack/echo/v4"
 )
 
@@ -18,7 +21,7 @@ func (svc *Service) NewCommandHandler(commandName string, usecase func(sc Servic
 
 	chs.name = commandName
 	chs.usecase = usecase
-	chs.dataType = dataType
+	chs.dataType = reflect.TypeOf(dataType)
 	svc.handlers = append(svc.handlers, chs)
 	return &chs
 }
@@ -32,6 +35,7 @@ func (svc *Service) RunCommand(sc ServiceContext, name string) error {
 				return err
 			}
 			//выполняем юзкейс
+			fmt.Println("get command", name)
 			return v.usecase(sc)
 		}
 	}
@@ -60,6 +64,7 @@ func (svc *Service) EchoEndpoint(name string) func(ctx echo.Context) error {
 		ctx.Response().Header().Set("X-Total-Count", "0")
 
 		tp := svc.getDataType(name)
+		spew.Dump("TP", tp)
 		if err := ctx.Bind(&tp); err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, "Error while decoding request body: "+err.Error())
 		}
